@@ -19,7 +19,7 @@
 </template>
 
 <script setup>
-import BlockLibrary from '@/components/BlockLibrary.vue'
+import BlockLibrary from '../components/BlockLibrary.vue'
 </script>
 
 <style scoped>
@@ -63,13 +63,6 @@ import BlockLibrary from '@/components/BlockLibrary.vue'
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-image: 
-    linear-gradient(45deg, #e9ecef 25%, transparent 25%),
-    linear-gradient(-45deg, #e9ecef 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #e9ecef 75%),
-    linear-gradient(-45deg, transparent 75%, #e9ecef 75%);
-  background-size: 20px 20px;
-  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
 }
 
 .canvas h3 {
