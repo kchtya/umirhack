@@ -1,20 +1,34 @@
 <template>
   <div class="block-library">
-    <h3>📚 Библиотека блоков</h3>
-    <div class="block-item" draggable="true">
-      📝 Текст
-    </div>
-    <div class="block-item" draggable="true">
-      🖼️ Изображение
-    </div>
-    <div class="block-item" draggable="true">
-      🔘 Кнопка
+    <h3>Библиотека блоков</h3>
+    <div 
+      v-for="blockType in blockTypes" 
+      :key="blockType.type"
+      class="block-item" 
+      draggable="true"
+      @dragstart="onDragStart(blockType)"
+    >
+      {{ blockType.emoji }} {{ blockType.name }}
     </div>
   </div>
 </template>
 
 <script setup>
-// Логику добавим позже
+import { useEditorStore } from '../stores/editor';
+
+const editorStore = useEditorStore();
+
+const blockTypes = [
+  { type: 'heading', name: 'Заголовок', emoji: '📝' },
+  { type: 'paragraph', name: 'Параграф', emoji: '📄' },
+  { type: 'button', name: 'Кнопка', emoji: '🔘' },
+  { type: 'image', name: 'Изображение', emoji: '🖼️' },
+  { type: 'text', name: 'Текст', emoji: '✏️' }
+];
+
+const onDragStart = (blockType) => {
+  event.dataTransfer.setData('application/json', JSON.stringify(blockType));
+};
 </script>
 
 <style scoped>

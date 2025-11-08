@@ -3,26 +3,100 @@
     <header class="header">
       <h1>🏗️ Конструктор Лендингов</h1>
       <p>Создайте идеальный лендинг за минуты!</p>
+      <div class="toolbar">
+        <button @click="saveProject" class="toolbar-btn">💾 Сохранить</button>
+        <span class="blocks-count">Блоков: {{ blocksCount }}</span>
+      </div>
     </header>
     
     <div class="editor-layout">
       <BlockLibrary />
-      <div class="canvas">
-        <h3>🎨 Холст</h3>
-        <p>Перетащите блоки сюда чтобы начать создание</p>
-        <div class="empty-state">
-          🖱️ Перетащите блоки из левой панели
+      <div 
+        class="canvas" 
+        @drop="handleDrop"
+        @dragover.prevent
+        @click="clearSelection"
+      >
+        <div v-if="blocksCount === 0" class="empty-state">
+          <h3>🎨 Холст</h3>
+          <p>Перетащите блоки сюда чтобы начать создание</p>
+          <div>🖱️ Перетащите блоки из левой панели</div>
+        </div>
+        
+        <div 
+          v-for="(block, index) in blocks" 
+          :key="block.id"
+          class="block-wrapper"
+          :class="{ active: activeBlock?.id === block.id }"
+          @click.stop="setActiveBlock(block.id)"
+        >
+          <component 
+            :is="getBlockComponent(block.type)" 
+            :content="block.content"
+            :class="['block-element', block.type]"
+          />
+          <button 
+            v-if="activeBlock?.id === block.id"
+            @click="deleteBlock(block.id)"
+            class="delete-btn"
+            title="Удалить блок"
+          >
+            ×
+          </button>
         </div>
       </div>
+      
+      <BlockEditor v-if="activeBlock" />
     </div>
   </div>
 </template>
 
 <script setup>
-import BlockLibrary from '../components/BlockLibrary.vue'
+import { useEditorStore } from '../stores/editor';
+import { storeToRefs } from 'pinia';
+import BlockLibrary from '../components/BlockLibrary.vue';
+import BlockEditor from '../components/BlockEditor.vue';
+
+const editorStore = useEditorStore();
+const { blocks, activeBlock, blocksCount } = storeToRefs(editorStore);
+const { addBlock, setActiveBlock, deleteBlock } = editorStore;
+
+const handleDrop = (event) => {
+  try {
+    const blockData = JSON.parse(event.dataTransfer.getData('application/json'));
+    addBlock(blockData.type);
+  } catch (error) {
+    console.error('Ошибка при добавлении блока:', error);
+  }
+};
+
+const clearSelection = () => {
+  setActiveBlock(null);
+};
+
+const saveProject = () => {
+  const project = {
+    blocks: blocks.value,
+    savedAt: new Date().toISOString()
+  };
+  localStorage.setItem('landing-project', JSON.stringify(project));
+  alert('Проект сохранен в localStorage!');
+};
+
+const getBlockComponent = (type) => {
+  const components = {
+    heading: 'h2',
+    paragraph: 'p',
+    button: 'button',
+    image: 'img',
+    text: 'div'
+  };
+  return components[type] || 'div';
+};
 </script>
 
 <style scoped>
+/* СТИЛИ УЧАСТНИКА 1 - НЕ ТРОГАЕМ */
 .home {
   height: 100vh;
   display: flex;
@@ -83,5 +157,114 @@ import BlockLibrary from '../components/BlockLibrary.vue'
   border-radius: 12px;
   color: #6c757d;
   font-size: 1.2rem;
+}
+
+/* Только эти стили добавляем для функциональности */
+.toolbar {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.toolbar-btn {
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.blocks-count {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.block-wrapper {
+  position: relative;
+  margin: 15px 0;
+  padding: 15px;
+  background: white;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.block-wrapper:hover {
+  border-color: #dee2e6;
+}
+
+.block-wrapper.active {
+  border-color: #4dabf7;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.block-element {
+  margin: 0;
+}
+
+.block-element.heading {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.block-element.paragraph {
+  line-height: 1.6;
+  color: #666;
+}
+
+.block-element.button {
+  padding: 10px 20px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.block-element.button:hover {
+  background: #0056b3;
+}
+
+.block-element.image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.block-element.text {
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.delete-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn:hover {
+  background: #c82333;
 }
 </style>
