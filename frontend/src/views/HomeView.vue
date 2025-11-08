@@ -30,11 +30,20 @@
           :class="{ active: activeBlock?.id === block.id }"
           @click.stop="setActiveBlock(block.id)"
         >
-          <component 
-            :is="getBlockComponent(block.type)" 
-            :content="block.content"
-            :class="['block-element', block.type]"
-          />
+          <div v-if="block.type === 'heading'" class="block-element heading">
+            {{ block.content }}
+          </div>
+          <div v-else-if="block.type === 'paragraph'" class="block-element paragraph">
+            {{ block.content }}
+          </div>
+          <button v-else-if="block.type === 'button'" class="block-element button">
+            {{ block.content }}
+          </button>
+          <img v-else-if="block.type === 'image'" :src="block.content" class="block-element image" alt="Image"/>
+          <div v-else-if="block.type === 'text'" class="block-element text">
+            {{ block.content }}
+          </div>
+          
           <button 
             v-if="activeBlock?.id === block.id"
             @click="deleteBlock(block.id)"
@@ -82,21 +91,9 @@ const saveProject = () => {
   localStorage.setItem('landing-project', JSON.stringify(project));
   alert('Проект сохранен в localStorage!');
 };
-
-const getBlockComponent = (type) => {
-  const components = {
-    heading: 'h2',
-    paragraph: 'p',
-    button: 'button',
-    image: 'img',
-    text: 'div'
-  };
-  return components[type] || 'div';
-};
 </script>
 
 <style scoped>
-/* СТИЛИ УЧАСТНИКА 1 - НЕ ТРОГАЕМ */
 .home {
   height: 100vh;
   display: flex;
@@ -159,7 +156,6 @@ const getBlockComponent = (type) => {
   font-size: 1.2rem;
 }
 
-/* Только эти стили добавляем для функциональности */
 .toolbar {
   display: flex;
   gap: 15px;
