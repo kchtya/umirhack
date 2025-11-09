@@ -20,7 +20,7 @@
       
       <div class="hero">
         <h1 class="hero-title">СОЗДАВАЙТЕ УМНЫЕ ЛЕНДИНГИ</h1>
-        <p class="hero-subtitle">Визуальный конструктор для быстрых результатов</p>
+        <p class="hero-subtitle">ВИЗУАЛЬНЫЙ КОНСТРУКТОР ДЛЯ БЫСТРЫХ РЕЗУЛЬТАТОВ</p>
         <div class="hero-stats">
           <div class="hero-stat">
             <span class="hero-stat-number">100+</span>
@@ -72,7 +72,10 @@
           :class="{ active: activeBlock?.id === block.id }"
           @click.stop="setActiveBlock(block.id)"
         >
-          <div v-if="block.type === 'heading'" class="block-element heading">
+          <div v-if="block.type === 'hero'" class="block-element hero">
+            {{ block.content }}
+          </div>
+          <div v-else-if="block.type === 'heading'" class="block-element heading">
             {{ block.content }}
           </div>
           <div v-else-if="block.type === 'paragraph'" class="block-element paragraph">
@@ -416,10 +419,22 @@ const scrollToSection = (sectionId) => {
   margin: 0;
 }
 
-.block-element.heading {
-  font-size: 1.5rem;
+.block-element.hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4rem 2rem;
+  text-align: center;
+  border-radius: 12px;
+  font-size: 2.5rem;
   font-weight: bold;
+}
+
+.block-element.heading {
+  font-size: 2rem;
+  font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: 1px;
+  margin: 0;
 }
 
 .block-element.paragraph {

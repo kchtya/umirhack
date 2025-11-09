@@ -1,10 +1,10 @@
 <template>
   <div class="block-editor">
-    <h3>Редактор блока</h3>
+    <h3>РЕДАКТОР БЛОКА</h3>
     
     <div class="editor-section">
       <label>Тип блока:</label>
-      <div class="block-type">{{ activeBlock.type }}</div>
+      <div class="block-type">{{ getBlockTypeName(activeBlock.type) }}</div>
     </div>
 
     <div class="editor-section">
@@ -15,6 +15,7 @@
         @input="updateContent"
         rows="4"
         placeholder="Введите текст..."
+        style="white-space: pre-wrap;"
       />
       <input 
         v-else-if="activeBlock.type === 'image'"
@@ -34,7 +35,7 @@
 
     <div class="editor-actions">
       <button @click="deleteCurrentBlock" class="btn-danger">
-        Удалить блок
+        УДАЛИТЬ БЛОК
       </button>
     </div>
   </div>
@@ -58,7 +59,7 @@ watch(activeBlock, (newBlock) => {
 }, { immediate: true });
 
 const isTextBlock = computed(() => {
-  const textTypes = ['heading', 'paragraph', 'text', 'button'];
+  const textTypes = ['hero', 'heading', 'paragraph', 'text', 'button'];
   return textTypes.includes(activeBlock.value?.type);
 });
 
@@ -73,74 +74,103 @@ const deleteCurrentBlock = () => {
     deleteBlock(activeBlock.value.id);
   }
 };
+
+const getBlockTypeName = (type) => {
+  const typeNames = {
+    'hero': 'ШАПКА',
+    'heading': 'ЗАГОЛОВОК',
+    'paragraph': 'ПАРАГРАФ', 
+    'button': 'КНОПКА',
+    'image': 'ИЗОБРАЖЕНИЕ',
+    'text': 'ТЕКСТ'
+  };
+  return typeNames[type] || type.toUpperCase();
+};
 </script>
 
 <style scoped>
 .block-editor {
   width: 300px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-left: 2px solid #dee2e6;
+  padding: 2rem;
+  background: var(--bg-tertiary);
+  border-left: 1px solid var(--border-color);
   min-height: 100vh;
 }
 
 .block-editor h3 {
-  margin: 0 0 20px 0;
-  color: #495057;
-  font-size: 1.2rem;
+  margin: 0 0 2rem 0;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 400;
+  letter-spacing: 2px;
+  opacity: 0.8;
+  text-transform: uppercase;
 }
 
 .editor-section {
-  margin-bottom: 20px;
+  margin-bottom: 2rem;
 }
 
 .editor-section label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #495057;
-  font-size: 0.9rem;
+  margin-bottom: 0.8rem;
+  font-weight: 300;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .block-type {
-  padding: 8px 12px;
-  background: white;
-  border: 1px solid #dee2e6;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 0.9rem;
+  color: var(--text-primary);
+  font-weight: 400;
+  letter-spacing: 1px;
 }
 
 input, textarea {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #dee2e6;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 0.9rem;
   resize: vertical;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: inherit;
 }
 
 input:focus, textarea:focus {
   outline: none;
-  border-color: #4dabf7;
-  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(59, 31, 161, 0.2);
 }
 
 .editor-actions {
-  margin-top: 30px;
+  margin-top: 2rem;
 }
 
 .btn-danger {
   width: 100%;
-  padding: 10px;
+  padding: 1rem;
   background: #dc3545;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.2s;
 }
 
 .btn-danger:hover {
   background: #c82333;
+  transform: translateY(-1px);
 }
 </style>

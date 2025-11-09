@@ -26,6 +26,7 @@ import { useEditorStore } from '../stores/editor';
 const editorStore = useEditorStore();
 
 const blockTypes = [
+   { type: 'hero', name: 'Шапка', emoji: '⭐' }, 
   { type: 'heading', name: 'Заголовок', emoji: '📝' },
   { type: 'paragraph', name: 'Параграф', emoji: '📄' },
   { type: 'button', name: 'Кнопка', emoji: '🔘' },
