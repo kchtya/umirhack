@@ -8,7 +8,7 @@ app = FastAPI(title="Landing Constructor API")
 # Разрешаем запросы от фронтенда
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Адрес фронтенда
+    allow_origins=["http://192.168.1.58:5176"],  # Адрес фронтенда !!!!!!!!!!!!!!!!!!!!!
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
