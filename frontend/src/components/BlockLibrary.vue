@@ -1,61 +1,26 @@
 <template>
   <div class="block-library">
-<<<<<<< HEAD
     <div class="library-header">
-      <h3>BLOCKS</h3>
-      <div class="block-count">{{ blocks.length }} ELEMENTS</div>
+      <h3>БИБЛИОТЕКА БЛОКОВ</h3>
+      <div class="block-count">{{ blockTypes.length }} ЭЛЕМЕНТОВ</div>
     </div>
     
     <div class="blocks-grid">
       <div 
-        v-for="block in blocks" 
-        :key="block.id"
+        v-for="blockType in blockTypes" 
+        :key="blockType.type"
         class="block-item" 
         draggable="true"
-        @dragstart="dragStart($event, block)"
+        @dragstart="onDragStart(blockType)"
       >
-        <span class="block-icon">{{ block.icon }}</span>
-        <span class="block-name">{{ block.name }}</span>
+        <span class="block-icon">{{ blockType.emoji }}</span>
+        <span class="block-name">{{ blockType.name }}</span>
       </div>
-=======
-    <h3>Библиотека блоков</h3>
-    <div 
-      v-for="blockType in blockTypes" 
-      :key="blockType.type"
-      class="block-item" 
-      draggable="true"
-      @dragstart="onDragStart(blockType)"
-    >
-      {{ blockType.emoji }} {{ blockType.name }}
->>>>>>> malix
     </div>
   </div>
 </template>
 
 <script setup>
-<<<<<<< HEAD
-import { ref } from 'vue'
-
-const blocks = ref([
-  { id: 1, type: 'text', name: 'Text', icon: '📝', content: 'Your text here...' },
-  { id: 2, type: 'image', name: 'Image', icon: '🖼️', content: 'Image URL' },
-  { id: 3, type: 'button', name: 'Button', icon: '🔘', content: 'Click me' },
-  { id: 4, type: 'header', name: 'Header', icon: '🏆', content: 'Main Header' },
-  { id: 5, type: 'paragraph', name: 'Paragraph', icon: '📄', content: 'Description text...' },
-  { id: 6, type: 'hero', name: 'Hero Section', icon: '⭐', content: 'Hero content' },
-  { id: 7, type: 'features', name: 'Features', icon: '🔧', content: 'Features list' },
-  { id: 8, type: 'testimonials', name: 'Testimonials', icon: '💬', content: 'Customer reviews' },
-  { id: 9, type: 'contact', name: 'Contact Form', icon: '📧', content: 'Contact information' },
-  { id: 10, type: 'footer', name: 'Footer', icon: '🔻', content: 'Footer content' },
-  { id: 11, type: 'gallery', name: 'Gallery', icon: '🖼️', content: 'Image gallery' },
-  { id: 12, type: 'video', name: 'Video', icon: '🎬', content: 'Video embed' }
-])
-
-const dragStart = (event, block) => {
-  event.dataTransfer.setData('blockType', block.type)
-  event.dataTransfer.setData('blockContent', block.content)
-}
-=======
 import { useEditorStore } from '../stores/editor';
 
 const editorStore = useEditorStore();
@@ -65,13 +30,17 @@ const blockTypes = [
   { type: 'paragraph', name: 'Параграф', emoji: '📄' },
   { type: 'button', name: 'Кнопка', emoji: '🔘' },
   { type: 'image', name: 'Изображение', emoji: '🖼️' },
-  { type: 'text', name: 'Текст', emoji: '✏️' }
+  { type: 'text', name: 'Текст', emoji: '✏️' },
+  { type: 'hero', name: 'Hero Секция', emoji: '⭐' },
+  { type: 'features', name: 'Функции', emoji: '🔧' },
+  { type: 'testimonials', name: 'Отзывы', emoji: '💬' },
+  { type: 'contact', name: 'Контакт', emoji: '📧' },
+  { type: 'footer', name: 'Футер', emoji: '🔻' }
 ];
 
 const onDragStart = (blockType) => {
   event.dataTransfer.setData('application/json', JSON.stringify(blockType));
 };
->>>>>>> malix
 </script>
 
 <style scoped>
