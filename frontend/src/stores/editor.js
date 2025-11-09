@@ -16,7 +16,7 @@ export const useEditorStore = defineStore('editor', () => {
       id: Date.now().toString(),
       type: blockType,
       content: getDefaultContent(blockType),
-      styles: {}
+      styles: getDefaultStyles(blockType)
     };
     blocks.value.push(newBlock);
     setActiveBlock(newBlock.id);
@@ -30,6 +30,14 @@ export const useEditorStore = defineStore('editor', () => {
     const block = blocks.value.find(block => block.id === id);
     if (block) {
       block.content = newContent;
+    }
+  };
+
+  // НОВЫЙ МЕТОД: Обновление стилей блока
+  const updateBlockStyles = (id, newStyles) => {
+    const block = blocks.value.find(block => block.id === id);
+    if (block) {
+      block.styles = { ...block.styles, ...newStyles };
     }
   };
 
@@ -48,15 +56,89 @@ export const useEditorStore = defineStore('editor', () => {
     blocks.value.splice(toIndex, 0, block);
   };
 
+  // НОВЫЙ МЕТОД: Дублирование блока
+  const duplicateBlock = (id) => {
+    const originalBlock = blocks.value.find(block => block.id === id);
+    if (originalBlock) {
+      const duplicatedBlock = {
+        ...JSON.parse(JSON.stringify(originalBlock)),
+        id: Date.now().toString()
+      };
+      const originalIndex = blocks.value.findIndex(block => block.id === id);
+      blocks.value.splice(originalIndex + 1, 0, duplicatedBlock);
+      setActiveBlock(duplicatedBlock.id);
+    }
+  };
+
+  // НОВЫЙ МЕТОД: Загрузка проекта
+  const loadProject = (projectBlocks) => {
+    blocks.value = JSON.parse(JSON.stringify(projectBlocks));
+    activeBlockId.value = null;
+  };
+
+  // НОВЫЙ МЕТОД: Очистка всех блоков
+  const clearAllBlocks = () => {
+    blocks.value = [];
+    activeBlockId.value = null;
+  };
+
   const getDefaultContent = (type) => {
     const defaults = {
-      'text': 'Текст блока',
-      'image': 'https://via.placeholder.com/300x200',
+      'hero': 'Заголовок героя',
+      'heading': 'Заголовок раздела',
+      'paragraph': 'Текст параграфа...', 
       'button': 'Нажмите меня',
-      'heading': 'Заголовок',
-      'paragraph': 'Абзац текста'
+      'image': 'https://via.placeholder.com/300x200',
+      'text': 'Простой текст',
+      'features': 'Блок функций',
+      'testimonials': 'Блок отзывов', 
+      'contact': 'Контактная форма',
+      'footer': 'Футер сайта'
     };
     return defaults[type] || '';
+  };
+
+  // НОВЫЙ МЕТОД: Стандартные стили для блоков
+  const getDefaultStyles = (type) => {
+    const baseStyles = {
+      backgroundColor: '#ffffff',
+      padding: '15px',
+      textAlign: 'left'
+    };
+
+    const typeStyles = {
+      'hero': {
+        backgroundColor: '#667eea',
+        color: '#ffffff',
+        fontSize: '48px',
+        textAlign: 'center',
+        padding: '60px 20px'
+      },
+      'heading': {
+        fontSize: '32px',
+        color: '#333333',
+        fontWeight: 'bold'
+      },
+      'paragraph': {
+        fontSize: '16px',
+        color: '#666666',
+        lineHeight: '1.6'
+      },
+      'button': {
+        backgroundColor: '#3b1fa1',
+        color: '#ffffff',
+        fontSize: '16px',
+        padding: '12px 24px',
+        border: 'none',
+        borderRadius: '6px'
+      },
+      'image': {
+        maxWidth: '100%',
+        borderRadius: '8px'
+      }
+    };
+
+    return { ...baseStyles, ...typeStyles[type] };
   };
 
   return {
@@ -67,7 +149,11 @@ export const useEditorStore = defineStore('editor', () => {
     addBlock,
     setActiveBlock,
     updateBlockContent,
+    updateBlockStyles, // ЭКСПОРТИРУЕМ НОВЫЙ МЕТОД
     deleteBlock,
-    moveBlock
+    moveBlock,
+    duplicateBlock, // ЭКСПОРТИРУЕМ НОВЫЙ МЕТОД
+    loadProject, // ЭКСПОРТИРУЕМ НОВЫЙ МЕТОД
+    clearAllBlocks // ЭКСПОРТИРУЕМ НОВЫЙ МЕТОД
   };
 });

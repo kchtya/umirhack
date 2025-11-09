@@ -39,7 +39,10 @@
     </header>
     
     <div class="editor-layout">
+      <!-- Левая панель: Библиотека блоков -->
       <BlockLibrary />
+      
+      <!-- Центральная область: Холст -->
       <div 
         class="canvas" 
         @drop="handleDrop"
@@ -54,7 +57,7 @@
               <span class="stat-label">БЛОКОВ</span>
             </div>
             <div class="stat">
-              <button @click="saveProject" class="toolbar-btn">💾 Сохранить</button>
+              <ProjectManager />
             </div>
           </div>
         </div>
@@ -64,13 +67,14 @@
           ПЕРЕТАЩИТЕ БЛОКИ ДЛЯ НАЧАЛА РАБОТЫ
         </div>
         
-        <!-- Блоки с функциональностью Участника 2 -->
+        <!-- Блоки с применением стилей -->
         <div 
           v-for="(block, index) in blocks" 
           :key="block.id"
           class="block-wrapper"
           :class="{ active: activeBlock?.id === block.id }"
           @click.stop="setActiveBlock(block.id)"
+          :style="getBlockStyles(block)"
         >
           <div v-if="block.type === 'hero'" class="block-element hero">
             {{ block.content }}
@@ -88,6 +92,9 @@
           <div v-else-if="block.type === 'text'" class="block-element text">
             {{ block.content }}
           </div>
+          <div v-else class="block-element unknown">
+            {{ block.content }}
+          </div>
           
           <button 
             v-if="activeBlock?.id === block.id"
@@ -100,7 +107,14 @@
         </div>
       </div>
       
-      <BlockEditor v-if="activeBlock" />
+      <!-- Правая панель: Редактор и инструменты -->
+      <div class="right-panel">
+        <BlockEditor v-if="activeBlock" />
+        <Toolbar v-if="activeBlock" />
+        <div v-if="!activeBlock" class="no-selection">
+          <p>Выберите блок для редактирования</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -110,6 +124,8 @@ import { useEditorStore } from '../stores/editor';
 import { storeToRefs } from 'pinia';
 import BlockLibrary from '../components/BlockLibrary.vue';
 import BlockEditor from '../components/BlockEditor.vue';
+import Toolbar from '../components/Toolbar.vue';
+import ProjectManager from '../components/ProjectManager.vue';
 
 // Функциональность Участника 2
 const editorStore = useEditorStore();
@@ -129,13 +145,9 @@ const clearSelection = () => {
   setActiveBlock(null);
 };
 
-const saveProject = () => {
-  const project = {
-    blocks: blocks.value,
-    savedAt: new Date().toISOString()
-  };
-  localStorage.setItem('landing-project', JSON.stringify(project));
-  alert('Проект сохранен в localStorage!');
+// НОВЫЙ МЕТОД: Применение стилей к блоку
+const getBlockStyles = (block) => {
+  return block.styles || {};
 };
 
 // Функциональность Участника 1
@@ -352,6 +364,7 @@ const scrollToSection = (sectionId) => {
   background: var(--bg-primary);
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .canvas-header {
@@ -392,6 +405,25 @@ const scrollToSection = (sectionId) => {
   opacity: 0.6;
   letter-spacing: 1px;
   color: var(--text-tertiary);
+}
+
+/* Правая панель */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  min-height: 100vh;
+}
+
+.no-selection {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+  font-size: 0.9rem;
+  letter-spacing: 1px;
 }
 
 /* Стили Участника 2 для блоков */
@@ -468,6 +500,15 @@ const scrollToSection = (sectionId) => {
   background: var(--bg-secondary);
   border-radius: 4px;
   color: var(--text-primary);
+}
+
+.block-element.unknown {
+  padding: 20px;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border-color);
+  border-radius: 4px;
+  color: var(--text-tertiary);
+  text-align: center;
 }
 
 .delete-btn {
