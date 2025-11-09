@@ -30,6 +30,10 @@
             <span class="hero-stat-number">300%</span>
             <span class="hero-stat-label">РОСТ КОНВЕРСИИ</span>
           </div>
+          <div class="hero-stat">
+            <span class="hero-stat-number">{{ blocksCount }}</span>
+            <span class="hero-stat-label">АКТИВНЫХ БЛОКОВ</span>
+          </div>
         </div>
       </div>
     </header>
@@ -39,59 +43,99 @@
       <div 
         class="canvas" 
         @drop="handleDrop"
-        @dragover="allowDrop"
+        @dragover.prevent
+        @click="clearSelection"
       >
         <div class="canvas-header">
           <h3>РАБОЧАЯ ОБЛАСТЬ</h3>
           <div class="canvas-stats">
             <div class="stat">
-              <span class="stat-number">50+</span>
+              <span class="stat-number">{{ blocksCount }}</span>
               <span class="stat-label">БЛОКОВ</span>
             </div>
             <div class="stat">
-              <span class="stat-number">85%</span>
-              <span class="stat-label">БЫСТРЕЕ</span>
+              <button @click="saveProject" class="toolbar-btn">💾 Сохранить</button>
             </div>
-          </div>
-        </div>
-        
-        <!-- Отображаем добавленные блоки -->
-        <div 
-          v-for="block in canvasBlocks" 
-          :key="block.id"
-          class="canvas-block"
-          :class="`block-${block.type}`"
-        >
-          <div v-if="block.type === 'text'" class="text-block">
-            {{ block.content }}
-          </div>
-          <div v-else-if="block.type === 'image'" class="image-block">
-            🖼️ {{ block.content }}
-          </div>
-          <div v-else-if="block.type === 'button'" class="button-block">
-            <button>{{ block.content }}</button>
-          </div>
-          <div v-else-if="block.type === 'header'" class="header-block">
-            <h2>{{ block.content }}</h2>
-          </div>
-          <div v-else-if="block.type === 'paragraph'" class="paragraph-block">
-            <p>{{ block.content }}</p>
           </div>
         </div>
         
         <!-- Пустое состояние -->
-        <div v-if="canvasBlocks.length === 0" class="empty-state">
+        <div v-if="blocksCount === 0" class="empty-state">
           ПЕРЕТАЩИТЕ БЛОКИ ДЛЯ НАЧАЛА РАБОТЫ
         </div>
+        
+        <!-- Блоки с функциональностью Участника 2 -->
+        <div 
+          v-for="(block, index) in blocks" 
+          :key="block.id"
+          class="block-wrapper"
+          :class="{ active: activeBlock?.id === block.id }"
+          @click.stop="setActiveBlock(block.id)"
+        >
+          <div v-if="block.type === 'heading'" class="block-element heading">
+            {{ block.content }}
+          </div>
+          <div v-else-if="block.type === 'paragraph'" class="block-element paragraph">
+            {{ block.content }}
+          </div>
+          <button v-else-if="block.type === 'button'" class="block-element button">
+            {{ block.content }}
+          </button>
+          <img v-else-if="block.type === 'image'" :src="block.content" class="block-element image" alt="Image"/>
+          <div v-else-if="block.type === 'text'" class="block-element text">
+            {{ block.content }}
+          </div>
+          
+          <button 
+            v-if="activeBlock?.id === block.id"
+            @click="deleteBlock(block.id)"
+            class="delete-btn"
+            title="Удалить блок"
+          >
+            ×
+          </button>
+        </div>
       </div>
+      
+      <BlockEditor v-if="activeBlock" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import BlockLibrary from '../components/BlockLibrary.vue'
+import { useEditorStore } from '../stores/editor';
+import { storeToRefs } from 'pinia';
+import BlockLibrary from '../components/BlockLibrary.vue';
+import BlockEditor from '../components/BlockEditor.vue';
 
+// Функциональность Участника 2
+const editorStore = useEditorStore();
+const { blocks, activeBlock, blocksCount } = storeToRefs(editorStore);
+const { addBlock, setActiveBlock, deleteBlock } = editorStore;
+
+const handleDrop = (event) => {
+  try {
+    const blockData = JSON.parse(event.dataTransfer.getData('application/json'));
+    addBlock(blockData.type);
+  } catch (error) {
+    console.error('Ошибка при добавлении блока:', error);
+  }
+};
+
+const clearSelection = () => {
+  setActiveBlock(null);
+};
+
+const saveProject = () => {
+  const project = {
+    blocks: blocks.value,
+    savedAt: new Date().toISOString()
+  };
+  localStorage.setItem('landing-project', JSON.stringify(project));
+  alert('Проект сохранен в localStorage!');
+};
+
+// Функциональность Участника 1
 defineProps({
   theme: {
     type: String,
@@ -110,36 +154,13 @@ const handleThemeToggle = (event) => {
 }
 
 const scrollToSection = (sectionId) => {
-  // Здесь можно добавить логику прокрутки к секциям
   console.log('Scroll to:', sectionId)
-}
-
-const canvasBlocks = ref([])
-
-const allowDrop = (event) => {
-  event.preventDefault()
-}
-
-const handleDrop = (event) => {
-  event.preventDefault()
-  const type = event.dataTransfer.getData('blockType')
-  const content = event.dataTransfer.getData('blockContent')
-  
-  if (type) {
-    canvasBlocks.value.push({
-      id: Date.now(),
-      type: type,
-      content: content,
-      styles: {}
-    })
-  }
 }
 </script>
 
 <style scoped>
 .home {
-  /* УБРАТЬ height: 100vh; */
-  min-height: 100vh; /* ← ЗАМЕНИТЬ на это */
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
@@ -150,7 +171,7 @@ const handleDrop = (event) => {
   pointer-events: none;
 }
 
-/* Навигация */
+/* Стили Участника 1 - навигация и hero */
 .nav {
   display: flex;
   justify-content: space-between;
@@ -182,7 +203,7 @@ const handleDrop = (event) => {
 }
 
 .nav-links span:hover {
-  color: #3b1fa1; /* Синий цвет из референса */
+  color: #3b1fa1;
   transform: translateY(-1px);
 }
 
@@ -193,7 +214,7 @@ const handleDrop = (event) => {
   left: 0;
   width: 0;
   height: 2px;
-  background: #3b1fa1; /* Синий акцент */
+  background: #3b1fa1;
   transition: width 0.3s ease;
 }
 
@@ -201,7 +222,6 @@ const handleDrop = (event) => {
   width: 100%;
 }
 
-/* Кнопка переключения темы */
 .theme-toggle {
   position: relative;
   background: var(--bg-tertiary);
@@ -221,7 +241,7 @@ const handleDrop = (event) => {
 .theme-toggle:hover:not(:disabled) {
   background: var(--hover-color);
   transform: scale(1.05);
-  border-color: #3b1fa1; /* Синий акцент */
+  border-color: #3b1fa1;
 }
 
 .theme-toggle:disabled {
@@ -242,7 +262,7 @@ const handleDrop = (event) => {
   width: 0;
   height: 0;
   border-radius: 50%;
-  background: #3b1fa1; /* Синий акцент */
+  background: #3b1fa1;
   transform: translate(-50%, -50%);
   opacity: 0;
   transition: all 0.3s ease;
@@ -254,7 +274,6 @@ const handleDrop = (event) => {
   opacity: 0.3;
 }
 
-/* Hero секция */
 .hero {
   text-align: center;
   padding: 4rem 2rem;
@@ -275,7 +294,7 @@ const handleDrop = (event) => {
   text-shadow: 
     2px 0 0 currentColor,
     0 2px 0 currentColor,
-    2px 2px 0 currentColor; /* Пиксельный эффект */
+    2px 2px 0 currentColor;
 }
 
 .hero-subtitle {
@@ -305,7 +324,7 @@ const handleDrop = (event) => {
   font-size: 2.5rem;
   font-weight: 300;
   letter-spacing: 2px;
-  color: #3b1fa1; /* Синий акцент */
+  color: #3b1fa1;
   margin-bottom: 0.5rem;
 }
 
@@ -321,8 +340,7 @@ const handleDrop = (event) => {
 .editor-layout {
   display: flex;
   flex: 1;
-  /* УБРАТЬ height: calc(100vh - 120px); */
-  min-height: 0; /* ← ДОБАВИТЬ это */
+  min-height: 0;
 }
 
 /* Холст */
@@ -351,6 +369,7 @@ const handleDrop = (event) => {
 .canvas-stats {
   display: flex;
   gap: 3rem;
+  align-items: center;
 }
 
 .stat {
@@ -362,7 +381,7 @@ const handleDrop = (event) => {
   font-size: 1.8rem;
   font-weight: 300;
   letter-spacing: 1px;
-  color: #3b1fa1; /* Синий акцент */
+  color: #3b1fa1;
 }
 
 .stat-label {
@@ -372,66 +391,92 @@ const handleDrop = (event) => {
   color: var(--text-tertiary);
 }
 
-/* Блоки на холсте */
-.canvas-block {
+/* Стили Участника 2 для блоков */
+.block-wrapper {
+  position: relative;
+  margin: 15px 2rem;
+  padding: 15px;
   background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 20px;
-  margin: 10px 2rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
   transition: all 0.2s;
-}
-
-.canvas-block:hover {
-  background: var(--hover-color);
-  border-color: #3b1fa1; /* Синий акцент */
-}
-
-.text-block {
-  font-size: 16px;
-  line-height: 1.5;
-  color: var(--text-primary);
-}
-
-.image-block {
-  text-align: center;
-  padding: 40px;
-  background: var(--bg-tertiary);
-  border: 2px dashed var(--border-color);
-  color: var(--text-secondary);
-}
-
-.button-block button {
-  background: #3b1fa1; /* Синий акцент */
-  color: white;
-  border: 1px solid #3b1fa1;
-  padding: 12px 24px;
-  border-radius: 4px;
   cursor: pointer;
-  font-weight: 400;
-  letter-spacing: 0.5px;
-  transition: all 0.2s;
 }
 
-.button-block button:hover {
-  background: #3b1fa1;
-  transform: translateY(-1px);
+.block-wrapper:hover {
+  border-color: var(--border-color);
 }
 
-.header-block h2 {
+.block-wrapper.active {
+  border-color: #4dabf7;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.block-element {
   margin: 0;
+}
+
+.block-element.heading {
+  font-size: 1.5rem;
+  font-weight: bold;
   color: var(--text-primary);
-  font-weight: 400;
-  letter-spacing: 1px;
 }
 
-.paragraph-block p {
-  margin: 0;
+.block-element.paragraph {
   line-height: 1.6;
   color: var(--text-secondary);
 }
 
-/* Пустое состояние */
+.block-element.button {
+  padding: 10px 20px;
+  background: #3b1fa1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.block-element.button:hover {
+  background: #4dabf7;
+  transform: translateY(-1px);
+}
+
+.block-element.image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.block-element.text {
+  padding: 10px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  color: var(--text-primary);
+}
+
+.delete-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn:hover {
+  background: #c82333;
+}
+
 .empty-state {
   flex: 1;
   display: flex;
@@ -441,5 +486,20 @@ const handleDrop = (event) => {
   letter-spacing: 1px;
   font-size: 0.9rem;
   color: var(--text-tertiary);
+}
+
+.toolbar-btn {
+  padding: 8px 16px;
+  background: #3b1fa1;
+  border: 1px solid #3b1fa1;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+  background: #4dabf7;
+  border-color: #4dabf7;
 }
 </style>

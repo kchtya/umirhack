@@ -1,5 +1,6 @@
 <template>
   <div class="block-library">
+<<<<<<< HEAD
     <div class="library-header">
       <h3>BLOCKS</h3>
       <div class="block-count">{{ blocks.length }} ELEMENTS</div>
@@ -16,11 +17,23 @@
         <span class="block-icon">{{ block.icon }}</span>
         <span class="block-name">{{ block.name }}</span>
       </div>
+=======
+    <h3>Библиотека блоков</h3>
+    <div 
+      v-for="blockType in blockTypes" 
+      :key="blockType.type"
+      class="block-item" 
+      draggable="true"
+      @dragstart="onDragStart(blockType)"
+    >
+      {{ blockType.emoji }} {{ blockType.name }}
+>>>>>>> malix
     </div>
   </div>
 </template>
 
 <script setup>
+<<<<<<< HEAD
 import { ref } from 'vue'
 
 const blocks = ref([
@@ -42,6 +55,23 @@ const dragStart = (event, block) => {
   event.dataTransfer.setData('blockType', block.type)
   event.dataTransfer.setData('blockContent', block.content)
 }
+=======
+import { useEditorStore } from '../stores/editor';
+
+const editorStore = useEditorStore();
+
+const blockTypes = [
+  { type: 'heading', name: 'Заголовок', emoji: '📝' },
+  { type: 'paragraph', name: 'Параграф', emoji: '📄' },
+  { type: 'button', name: 'Кнопка', emoji: '🔘' },
+  { type: 'image', name: 'Изображение', emoji: '🖼️' },
+  { type: 'text', name: 'Текст', emoji: '✏️' }
+];
+
+const onDragStart = (blockType) => {
+  event.dataTransfer.setData('application/json', JSON.stringify(blockType));
+};
+>>>>>>> malix
 </script>
 
 <style scoped>
