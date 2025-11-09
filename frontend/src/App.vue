@@ -35,24 +35,20 @@ const overlayStyle = computed(() => {
 })
 
 const toggleTheme = (event) => {
-  // Получаем координаты клика для анимации
   if (event) {
     transitionOrigin.x = event.clientX
     transitionOrigin.y = event.clientY
   } else {
-    // Если координат нет - анимируем из центра
     transitionOrigin.x = window.innerWidth / 2
     transitionOrigin.y = window.innerHeight / 2
   }
   
   isTransitioning.value = true
   
-  // Задержка перед сменой темы для плавности
   setTimeout(() => {
     isDarkTheme.value = !isDarkTheme.value
   }, 300)
   
-  // Завершение анимации
   setTimeout(() => {
     isTransitioning.value = false
   }, 900)
@@ -74,9 +70,9 @@ body {
   transition: all 0.3s ease;
 }
 
-/* Подключаем тонкий шрифт Inter */
+/* Подключаем шрифты */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap&subset=cyrillic');npm run dev -- --host
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap&subset=cyrillic');
 
 /* Тёмная тема (по умолчанию) */
 .theme-dark {
@@ -93,9 +89,9 @@ body {
 
 /* Светлая тема */
 .theme-light {
-  --bg-primary: #f8f6f2;  /* Молочный фон только для основного фона */
-  --bg-secondary: #ffffff;  /* Блоки остаются белыми */
-  --bg-tertiary: #ffffff;   /* Элементы интерфейса белые */
+  --bg-primary: #f8f6f2;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #ffffff;
   --text-primary: #2a2a2a;
   --text-secondary: rgba(0,0,0,0.7);
   --text-tertiary: rgba(0,0,0,0.5);
@@ -146,13 +142,12 @@ body {
   --transition-color: rgba(0, 0, 0, 0.1);
 }
 
-/* Сброс стилей для consistent rendering */
+/* Остальные глобальные стили */
 #app {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -170,24 +165,20 @@ body {
   background: var(--text-tertiary);
 }
 
-/* Selection color */
 ::selection {
   background: var(--accent-color);
   color: inherit;
 }
 
-/* Focus styles for accessibility */
 *:focus {
   outline: 2px solid var(--accent-color);
   outline-offset: 2px;
 }
 
-/* Smooth transitions for all interactive elements */
 button, .block-item, .nav-links span, .theme-toggle {
   transition: all 0.3s ease;
 }
 
-/* Ensure images and media are responsive */
 img, video {
   max-width: 100%;
   height: auto;
