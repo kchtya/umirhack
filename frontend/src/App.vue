@@ -1,61 +1,62 @@
 <template>
   <div id="app" :class="currentTheme">
-    <!-- Эффект перетекания темы -->
-    <div 
-      class="theme-transition-overlay" 
-      :class="{ active: isTransitioning }"
-      :style="overlayStyle"
-    ></div>
-    
-    <HomeView 
-      :theme="currentTheme" 
-      @toggle-theme="toggleTheme" 
-      :is-transitioning="isTransitioning"
-    />
+    <div class="global-ripple" :class="{ active: isRippling }" :style="rippleStyle"></div>
+    <router-view />
   </div>
 </template>
 
-<script setup>
-import { ref, computed, reactive } from 'vue'
-import HomeView from './views/HomeView.vue'
+<script>
+import { ref, computed, provide } from 'vue'
+import { useThemeStore } from './stores/theme'
+import { storeToRefs } from 'pinia'
 
-const isDarkTheme = ref(true)
-const isTransitioning = ref(false)
-const transitionOrigin = reactive({ x: 0, y: 0 })
+export default {
+  name: 'App',
+  setup() {
+    const themeStore = useThemeStore()
+    const { currentTheme } = storeToRefs(themeStore)
+    const isRippling = ref(false)
+    const rippleOrigin = ref({ x: 0, y: 0 })
 
-const currentTheme = computed(() => {
-  return isDarkTheme.value ? 'theme-dark' : 'theme-light'
-})
+    const rippleStyle = computed(() => {
+      return {
+        '--ripple-x': `${rippleOrigin.value.x}px`,
+        '--ripple-y': `${rippleOrigin.value.y}px`
+      }
+    })
 
-const overlayStyle = computed(() => {
-  return {
-    '--origin-x': `${transitionOrigin.x}px`,
-    '--origin-y': `${transitionOrigin.y}px`
+    const startRipple = (event) => {
+      const rect = event.currentTarget.getBoundingClientRect()
+      rippleOrigin.value = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+      }
+      
+      isRippling.value = true
+      setTimeout(() => {
+        themeStore.toggleTheme()
+        setTimeout(() => {
+          isRippling.value = false
+        }, 600)
+      }, 300)
+    }
+
+    provide('startRipple', startRipple)
+
+    return {
+      currentTheme,
+      isRippling,
+      rippleStyle
+    }
   }
-})
-
-const toggleTheme = (event) => {
-  if (event) {
-    transitionOrigin.x = event.clientX
-    transitionOrigin.y = event.clientY
-  } else {
-    transitionOrigin.x = window.innerWidth / 2
-    transitionOrigin.y = window.innerHeight / 2
-  }
-  
-  isTransitioning.value = true
-  
-  setTimeout(() => {
-    isDarkTheme.value = !isDarkTheme.value
-  }, 300)
-  
-  setTimeout(() => {
-    isTransitioning.value = false
-  }, 900)
 }
 </script>
 
 <style>
+/* Подключаем monospace шрифты с поддержкой кириллицы */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -63,16 +64,12 @@ const toggleTheme = (event) => {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: 'JetBrains Mono', 'IBM Plex Mono', 'Fira Code', 'Cascadia Code', 'Source Code Pro', 'Courier New', monospace;
   font-weight: 300;
   line-height: 1.6;
   overflow-x: hidden;
-  transition: all 0.3s ease;
+  font-feature-settings: "calt" 1;
 }
-
-/* Подключаем шрифты */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap&subset=cyrillic');
 
 /* Тёмная тема (по умолчанию) */
 .theme-dark {
@@ -104,42 +101,30 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
-  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
 }
 
-/* Эффект перетекания темы */
-.theme-transition-overlay {
+/* Глобальный ripple эффект */
+.global-ripple {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1000;
+  top: var(--ripple-y, 50%);
+  left: var(--ripple-x, 50%);
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, #3b1fa1 0%, transparent 70%);
+  transform: translate(-50%, -50%);
   opacity: 0;
-  background: radial-gradient(
-    circle at var(--origin-x, 50%) var(--origin-y, 50%),
-    var(--transition-color, rgba(255,255,255,0.1)) 0%,
-    transparent 60%
-  );
-  transform: scale(0.1);
-  transition: all 0s;
+  z-index: 1000;
+  pointer-events: none;
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.theme-transition-overlay.active {
-  opacity: 1;
-  transform: scale(4);
-  transition: all 0.9s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.theme-dark .theme-transition-overlay {
-  --transition-color: rgba(255, 255, 255, 0.1);
-}
-
-.theme-light .theme-transition-overlay {
-  --transition-color: rgba(0, 0, 0, 0.1);
+.global-ripple.active {
+  width: 200vmax;
+  height: 200vmax;
+  opacity: 0.3;
 }
 
 /* Остальные глобальные стили */
