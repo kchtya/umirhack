@@ -30,6 +30,7 @@ export const useEditorStore = defineStore('editor', () => {
     const block = blocks.value.find(block => block.id === id);
     if (block) {
       block.content = newContent;
+      console.log('Content updated:', block);
     }
   };
 
@@ -37,14 +38,19 @@ export const useEditorStore = defineStore('editor', () => {
   const updateBlockStyles = (id, newStyles) => {
     const block = blocks.value.find(block => block.id === id);
     if (block) {
+      // Сохраняем существующие стили и добавляем новые
       block.styles = { ...block.styles, ...newStyles };
+      console.log('Styles updated:', block.styles);
     }
   };
 
   const deleteBlock = (id) => {
-    blocks.value = blocks.value.filter(block => block.id !== id);
-    if (activeBlockId.value === id) {
-      activeBlockId.value = null;
+    const blockIndex = blocks.value.findIndex(block => block.id === id);
+    if (blockIndex !== -1) {
+      blocks.value.splice(blockIndex, 1);
+      if (activeBlockId.value === id) {
+        activeBlockId.value = null;
+      }
     }
   };
 
@@ -88,12 +94,12 @@ export const useEditorStore = defineStore('editor', () => {
       'heading': 'Заголовок раздела',
       'paragraph': 'Текст параграфа...', 
       'button': 'Нажмите меня',
-      'image': 'https://via.placeholder.com/300x200',
+      'image': 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&h=300&fit=crop',
       'text': 'Простой текст',
-      'features': 'Блок функций',
-      'testimonials': 'Блок отзывов', 
-      'contact': 'Контактная форма',
-      'footer': 'Футер сайта'
+      'features': 'Описание функций вашего продукта',
+      'testimonials': 'Отзывы клиентов о вашем продукте', 
+      'contact': 'Контактная информация',
+      'footer': 'Футер сайта с дополнительной информацией'
     };
     return defaults[type] || '';
   };
@@ -102,8 +108,16 @@ export const useEditorStore = defineStore('editor', () => {
   const getDefaultStyles = (type) => {
     const baseStyles = {
       backgroundColor: '#ffffff',
-      padding: '15px',
-      textAlign: 'left'
+      color: '#000000',
+      fontSize: '16px',
+      fontFamily: 'inherit',
+      textAlign: 'left',
+      padding: '20px',
+      margin: '10px 0',
+      borderRadius: '8px',
+      border: 'none',
+      width: '100%',
+      minHeight: 'auto'
     };
 
     const typeStyles = {
@@ -112,29 +126,74 @@ export const useEditorStore = defineStore('editor', () => {
         color: '#ffffff',
         fontSize: '48px',
         textAlign: 'center',
-        padding: '60px 20px'
+        padding: '80px 20px',
+        fontFamily: 'inherit',
+        minHeight: '300px'
       },
       'heading': {
         fontSize: '32px',
         color: '#333333',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        padding: '30px 20px',
+        fontFamily: 'inherit'
       },
       'paragraph': {
-        fontSize: '16px',
+        fontSize: '18px',
         color: '#666666',
-        lineHeight: '1.6'
+        lineHeight: '1.6',
+        padding: '20px',
+        fontFamily: 'inherit'
       },
       'button': {
         backgroundColor: '#3b1fa1',
         color: '#ffffff',
-        fontSize: '16px',
-        padding: '12px 24px',
+        fontSize: '18px',
+        padding: '15px 30px',
         border: 'none',
-        borderRadius: '6px'
+        borderRadius: '8px',
+        fontFamily: 'inherit',
+        width: 'auto',
+        cursor: 'pointer'
       },
       'image': {
         maxWidth: '100%',
-        borderRadius: '8px'
+        borderRadius: '8px',
+        padding: '10px',
+        backgroundColor: 'transparent',
+        minHeight: '200px'
+      },
+      'text': {
+        fontSize: '16px',
+        color: '#333333',
+        padding: '15px',
+        fontFamily: 'inherit'
+      },
+      'features': {
+        backgroundColor: '#f8f9fa',
+        color: '#333333',
+        padding: '40px 20px',
+        textAlign: 'center',
+        fontFamily: 'inherit'
+      },
+      'testimonials': {
+        backgroundColor: '#e9ecef',
+        color: '#333333',
+        padding: '40px 20px',
+        textAlign: 'center',
+        fontFamily: 'inherit'
+      },
+      'contact': {
+        backgroundColor: '#dee2e6',
+        color: '#333333',
+        padding: '40px 20px',
+        fontFamily: 'inherit'
+      },
+      'footer': {
+        backgroundColor: '#343a40',
+        color: '#ffffff',
+        padding: '30px 20px',
+        textAlign: 'center',
+        fontFamily: 'inherit'
       }
     };
 
@@ -149,11 +208,12 @@ export const useEditorStore = defineStore('editor', () => {
     addBlock,
     setActiveBlock,
     updateBlockContent,
-    updateBlockStyles, // ЭКСПОРТИРУЕМ НОВЫЙ МЕТОД
+    updateBlockStyles,
     deleteBlock,
     moveBlock,
-    duplicateBlock, // ЭКСПОРТИРУЕМ НОВЫЙ МЕТОД
-    loadProject, // ЭКСПОРТИРУЕМ НОВЫЙ МЕТОД
-    clearAllBlocks // ЭКСПОРТИРУЕМ НОВЫЙ МЕТОД
+    duplicateBlock,
+    loadProject,
+    clearAllBlocks,
+    getDefaultContent
   };
 });

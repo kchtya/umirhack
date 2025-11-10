@@ -2,19 +2,44 @@
   <div class="block-library">
     <div class="library-header">
       <h3>БИБЛИОТЕКА БЛОКОВ</h3>
-      <div class="block-count">{{ blockTypes.length }} ЭЛЕМЕНТОВ</div>
+      <div class="block-count">{{ allBlocks.length }} ЭЛЕМЕНТОВ</div>
     </div>
     
-    <div class="blocks-grid">
-      <div 
-        v-for="blockType in blockTypes" 
-        :key="blockType.type"
-        class="block-item" 
-        draggable="true"
-        @dragstart="onDragStart(blockType)"
-      >
-        <span class="block-icon">{{ blockType.emoji }}</span>
-        <span class="block-name">{{ blockType.name }}</span>
+    <div class="library-content">
+      <div class="library-sections">
+        <!-- Основные блоки -->
+        <div class="section">
+          <h4 class="section-title">ОСНОВНЫЕ</h4>
+          <div class="blocks-grid">
+            <div 
+              v-for="blockType in basicBlocks" 
+              :key="blockType.type"
+              class="block-item" 
+              draggable="true"
+              @dragstart="onDragStart(blockType, $event)"
+            >
+              <span class="block-icon">{{ blockType.emoji }}</span>
+              <span class="block-name">{{ blockType.name }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Секции -->
+        <div class="section">
+          <h4 class="section-title">СЕКЦИИ</h4>
+          <div class="blocks-grid">
+            <div 
+              v-for="blockType in sectionBlocks" 
+              :key="blockType.type"
+              class="block-item" 
+              draggable="true"
+              @dragstart="onDragStart(blockType, $event)"
+            >
+              <span class="block-icon">{{ blockType.emoji }}</span>
+              <span class="block-name">{{ blockType.name }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -25,41 +50,47 @@ import { useEditorStore } from '../stores/editor';
 
 const editorStore = useEditorStore();
 
-const blockTypes = [
-   { type: 'hero', name: 'Шапка', emoji: '⭐' }, 
+const basicBlocks = [
   { type: 'heading', name: 'Заголовок', emoji: '📝' },
   { type: 'paragraph', name: 'Параграф', emoji: '📄' },
   { type: 'button', name: 'Кнопка', emoji: '🔘' },
   { type: 'image', name: 'Изображение', emoji: '🖼️' },
-  { type: 'text', name: 'Текст', emoji: '✏️' },
+  { type: 'text', name: 'Текст', emoji: '✏️' }
+];
+
+const sectionBlocks = [
   { type: 'hero', name: 'Hero Секция', emoji: '⭐' },
   { type: 'features', name: 'Функции', emoji: '🔧' },
   { type: 'testimonials', name: 'Отзывы', emoji: '💬' },
-  { type: 'contact', name: 'Контакт', emoji: '📧' },
+  { type: 'contact', name: 'Контакты', emoji: '📧' },
   { type: 'footer', name: 'Футер', emoji: '🔻' }
 ];
 
-const onDragStart = (blockType) => {
+const allBlocks = [...basicBlocks, ...sectionBlocks];
+
+const onDragStart = (blockType, event) => {
+  console.log('Drag start:', blockType);
   event.dataTransfer.setData('application/json', JSON.stringify(blockType));
+  event.dataTransfer.effectAllowed = 'copy';
 };
 </script>
 
 <style scoped>
 .block-library {
-  width: 280px;
+  width: 100%;
+  height: 100%;
   background: var(--bg-secondary);
-  border-right: 1px solid var(--border-color);
-  min-height: 100vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .library-header {
   padding: 2rem 1.5rem;
   border-bottom: 1px solid var(--border-color);
-  position: sticky;
-  top: 0;
   background: var(--bg-secondary);
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .library-header h3 {
@@ -80,8 +111,35 @@ const onDragStart = (blockType) => {
   color: var(--text-tertiary);
 }
 
+.library-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.library-sections {
+  padding: 1rem 0;
+  flex: 1;
+}
+
+.section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin: 0 1.5rem 1rem 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
 .blocks-grid {
-  padding: 1rem;
+  padding: 0 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -146,20 +204,20 @@ const onDragStart = (blockType) => {
 }
 
 /* Custom scrollbar for block library */
-.block-library::-webkit-scrollbar {
+.library-content::-webkit-scrollbar {
   width: 6px;
 }
 
-.block-library::-webkit-scrollbar-track {
+.library-content::-webkit-scrollbar-track {
   background: var(--bg-tertiary);
 }
 
-.block-library::-webkit-scrollbar-thumb {
+.library-content::-webkit-scrollbar-thumb {
   background: var(--accent-color);
   border-radius: 3px;
 }
 
-.block-library::-webkit-scrollbar-thumb:hover {
+.library-content::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
 }
 

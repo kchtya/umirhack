@@ -24,9 +24,6 @@
         <button @click="newProject" class="project-btn">
           🆕 Новый
         </button>
-        <button @click="exportProject" class="project-btn">
-          📤 Экспорт
-        </button>
       </div>
     </div>
 
@@ -134,22 +131,6 @@ const newProject = () => {
   }
 };
 
-const exportProject = () => {
-  const projectData = {
-    name: projectName.value,
-    blocks: blocks.value,
-    exportedAt: new Date().toISOString()
-  };
-  
-  const dataStr = JSON.stringify(projectData, null, 2);
-  const dataBlob = new Blob([dataStr], { type: 'application/json' });
-  
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(dataBlob);
-  link.download = `${projectName.value}.json`;
-  link.click();
-};
-
 const deleteProject = (projectId) => {
   if (confirm('Удалить этот проект?')) {
     const filteredProjects = savedProjects.value.filter(p => p.id !== projectId);
@@ -174,15 +155,15 @@ const formatDate = (dateString) => {
 
 <style scoped>
 .project-manager {
-  width: 300px;
-  padding: 2rem;
+  width: 100%;
+  padding: 1.5rem;
   background: var(--bg-tertiary);
-  border-left: 1px solid var(--border-color);
-  min-height: 100vh;
+  min-height: 100%;
+  overflow-y: auto;
 }
 
 .project-manager h3 {
-  margin: 0 0 2rem 0;
+  margin: 0 0 1.5rem 0;
   color: var(--text-primary);
   font-size: 0.9rem;
   font-weight: 400;
@@ -192,7 +173,7 @@ const formatDate = (dateString) => {
 }
 
 .project-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .project-section label {
@@ -212,6 +193,7 @@ const formatDate = (dateString) => {
   border-radius: 4px;
   background: var(--bg-secondary);
   color: var(--text-primary);
+  font-size: 0.9rem;
 }
 
 .project-actions {
@@ -270,6 +252,7 @@ const formatDate = (dateString) => {
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 0.3rem;
+  font-size: 0.9rem;
 }
 
 .project-date {
@@ -297,5 +280,23 @@ const formatDate = (dateString) => {
 
 .delete-project-btn:hover {
   background: #c82333;
+}
+
+/* Кастомный скроллбар */
+.project-manager::-webkit-scrollbar {
+  width: 6px;
+}
+
+.project-manager::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+}
+
+.project-manager::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 3px;
+}
+
+.project-manager::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
 }
 </style>
