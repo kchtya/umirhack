@@ -18,7 +18,9 @@
               draggable="true"
               @dragstart="onDragStart(blockType, $event)"
             >
-              <span class="block-icon">{{ blockType.emoji }}</span>
+              <div class="block-icon">
+                <component :is="blockType.icon" :size="20" />
+              </div>
               <span class="block-name">{{ blockType.name }}</span>
             </div>
           </div>
@@ -35,7 +37,9 @@
               draggable="true"
               @dragstart="onDragStart(blockType, $event)"
             >
-              <span class="block-icon">{{ blockType.emoji }}</span>
+              <div class="block-icon">
+                <component :is="blockType.icon" :size="20" />
+              </div>
               <span class="block-name">{{ blockType.name }}</span>
             </div>
           </div>
@@ -47,23 +51,35 @@
 
 <script setup>
 import { useEditorStore } from '../stores/editor';
+import { 
+  Heading, 
+  Pilcrow, 
+  MousePointerClick, 
+  Image, 
+  Type,
+  Star,
+  Wrench,
+  MessageCircle,
+  Mail,
+  Minus
+} from 'lucide-vue-next';
 
 const editorStore = useEditorStore();
 
 const basicBlocks = [
-  { type: 'heading', name: 'Заголовок', emoji: '📝' },
-  { type: 'paragraph', name: 'Параграф', emoji: '📄' },
-  { type: 'button', name: 'Кнопка', emoji: '🔘' },
-  { type: 'image', name: 'Изображение', emoji: '🖼️' },
-  { type: 'text', name: 'Текст', emoji: '✏️' }
+  { type: 'heading', name: 'Заголовок', icon: Heading },
+  { type: 'paragraph', name: 'Параграф', icon: Pilcrow },
+  { type: 'button', name: 'Кнопка', icon: MousePointerClick },
+  { type: 'image', name: 'Изображение', icon: Image },
+  { type: 'text', name: 'Текст', icon: Type }
 ];
 
 const sectionBlocks = [
-  { type: 'hero', name: 'Hero Секция', emoji: '⭐' },
-  { type: 'features', name: 'Функции', emoji: '🔧' },
-  { type: 'testimonials', name: 'Отзывы', emoji: '💬' },
-  { type: 'contact', name: 'Контакты', emoji: '📧' },
-  { type: 'footer', name: 'Футер', emoji: '🔻' }
+  { type: 'hero', name: 'Hero Секция', icon: Star },
+  { type: 'features', name: 'Функции', icon: Wrench },
+  { type: 'testimonials', name: 'Отзывы', icon: MessageCircle },
+  { type: 'contact', name: 'Контакты', icon: Mail },
+  { type: 'footer', name: 'Футер', icon: Minus }
 ];
 
 const allBlocks = [...basicBlocks, ...sectionBlocks];
@@ -187,11 +203,15 @@ const onDragStart = (blockType, event) => {
 }
 
 .block-icon {
-  font-size: 1.3rem;
-  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
   flex-shrink: 0;
-  width: 24px;
-  text-align: center;
 }
 
 .block-name {

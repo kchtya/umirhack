@@ -11,7 +11,7 @@
         <div class="nav-center">
           <div class="nav-menu">
             <span class="nav-item">Конструктор</span>
-            <span class="nav-item">Шаблоны</span>
+            <span @click="goToTemplates" class="nav-item">Шаблоны</span>
             <span @click="handleExport" class="nav-item">Экспорт</span>
           </div>
         </div>
@@ -53,7 +53,9 @@
           
           <!-- Пустое состояние -->
           <div v-if="blocksCount === 0" class="empty-state">
-            <div class="empty-icon">⬇️</div>
+            <div class="empty-icon">
+              <Download :size="48" />
+            </div>
             <p>ПЕРЕТАЩИТЕ БЛОКИ ДЛЯ НАЧАЛА РАБОТЫ</p>
           </div>
           
@@ -67,9 +69,27 @@
               @click.stop="setActiveBlock(block.id)"
               :style="getBlockStyles(block)"
             >
-              <!-- Drag handle -->
-              <div class="drag-handle" title="Перетащить блок" @mousedown="startDrag(block.id, $event)">
-                ⋮⋮
+              <!-- Заголовок блока с иконкой -->
+              <div class="block-header">
+                <div class="block-type">
+                  <component :is="getBlockIcon(block.type)" :size="16" class="block-type-icon" />
+                  <span class="block-type-label">{{ getBlockLabel(block.type) }}</span>
+                </div>
+                <div class="block-actions">
+                  <!-- Drag handle -->
+                  <div class="drag-handle" title="Перетащить блок" @mousedown="startDrag(block.id, $event)">
+                    <GripVertical :size="16" />
+                  </div>
+                  
+                  <!-- Кнопка удаления -->
+                  <button 
+                    @click.stop="deleteBlock(block.id)"
+                    class="delete-btn"
+                    title="Удалить блок"
+                  >
+                    <X :size="16" />
+                  </button>
+                </div>
               </div>
               
               <!-- Hero блок -->
@@ -94,22 +114,34 @@
               
               <!-- Image блок -->
               <div v-else-if="block.type === 'image'" class="block-element image">
-              <img 
-                v-if="isValidImageUrl(block.content)" 
-                :src="block.content" 
-                alt="Image block" 
-                @error="handleImageError"
-                :style="{ 
-                  width: block.styles?.width || '100%',
-                  height: block.styles?.height || 'auto',
-                  borderRadius: block.styles?.borderRadius || '8px'
-                }"
-              >
-              <div v-else class="image-placeholder">
-                🖼️ Введите URL изображения
-                <div class="image-hint">Например: https://images.unsplash.com/photo-1550745165-9bc0b252726f</div>
+                <img 
+                  v-if="isValidImageUrl(block.content)" 
+                  :src="block.content" 
+                  alt="Image block" 
+                  @error="handleImageError"
+                  :style="{ 
+                    width: block.styles?.width || '100%',
+                    height: block.styles?.height || 'auto',
+                    borderRadius: block.styles?.borderRadius || '8px'
+                  }"
+                >
+                <div v-else class="image-placeholder">
+                  <Image :size="32" />
+                  <p>Введите URL изображения</p>
+                  <div class="image-hint">Например: https://images.unsplash.com/photo-1550745165-9bc0b252726f</div>
+                </div>
               </div>
-            </div>
+              
+              <!-- Text блок -->
+              <div v-else-if="block.type === 'text'" class="block-element text">
+                <p>{{ block.content }}</p>
+              </div>
+              
+              <!-- Features блок -->
+              <div v-else-if="block.type === 'features'" class="block-element features">
+                <h3>Функции</h3>
+                <p>{{ block.content }}</p>
+              </div>
               
               <!-- Testimonials блок -->
               <div v-else-if="block.type === 'testimonials'" class="block-element testimonials">
@@ -132,24 +164,14 @@
               <div v-else class="block-element unknown">
                 {{ block.content }}
               </div>
-              
-              <!-- Кнопка удаления -->
-              <button 
-                v-if="activeBlock?.id === block.id"
-                @click="deleteBlock(block.id)"
-                class="delete-btn"
-                title="Удалить блок"
-              >
-                ×
-              </button>
 
               <!-- Кнопки перемещения -->
               <div v-if="activeBlock?.id === block.id" class="move-buttons">
-                <button @click="moveBlockUp(index)" class="move-btn" :disabled="index === 0" title="Переместить вверх">
-                  ↑
+                <button @click.stop="moveBlockUp(index)" class="move-btn" :disabled="index === 0" title="Переместить вверх">
+                  <ChevronUp :size="14" />
                 </button>
-                <button @click="moveBlockDown(index)" class="move-btn" :disabled="index === blocks.length - 1" title="Переместить вниз">
-                  ↓
+                <button @click.stop="moveBlockDown(index)" class="move-btn" :disabled="index === blocks.length - 1" title="Переместить вниз">
+                  <ChevronDown :size="14" />
                 </button>
               </div>
             </div>
@@ -164,6 +186,7 @@
           <Toolbar v-if="activeBlock" />
           <ProjectManager v-if="!activeBlock" />
           <div v-if="!activeBlock && blocksCount > 0" class="no-selection">
+            <MousePointerClick :size="32" />
             <p>Выберите блок для редактирования</p>
           </div>
         </div>
@@ -183,13 +206,40 @@ import BlockEditor from '../components/BlockEditor.vue';
 import Toolbar from '../components/Toolbar.vue';
 import ProjectManager from '../components/ProjectManager.vue';
 
+// Иконки Lucide
+import { 
+  Download,
+  GripVertical,
+  X,
+  ChevronUp,
+  ChevronDown,
+  Image,
+  MousePointerClick,
+  Heading,
+  Pilcrow,
+  MousePointerClick as ButtonIcon,
+  Type,
+  Star,
+  Wrench,
+  MessageCircle,
+  Mail,
+  Minus
+} from 'lucide-vue-next';
+
 export default {
   name: 'EditorView',
   components: {
     BlockLibrary,
     BlockEditor,
     Toolbar,
-    ProjectManager
+    ProjectManager,
+    Download,
+    GripVertical,
+    X,
+    ChevronUp,
+    ChevronDown,
+    Image,
+    MousePointerClick
   },
   setup() {
     const editorStore = useEditorStore();
@@ -206,6 +256,10 @@ export default {
       event.preventDefault();
       event.dataTransfer.dropEffect = 'copy';
     };
+
+    const goToTemplates = () => {
+      router.push('/templates')
+    }
 
     const handleDragEnter = (event) => {
       event.preventDefault();
@@ -249,6 +303,38 @@ export default {
       return url.startsWith('http') || url.startsWith('data:image');
     };
 
+    const getBlockIcon = (type) => {
+      const icons = {
+        hero: Star,
+        heading: Heading,
+        paragraph: Pilcrow,
+        button: ButtonIcon,
+        image: Image,
+        text: Type,
+        features: Wrench,
+        testimonials: MessageCircle,
+        contact: Mail,
+        footer: Minus
+      };
+      return icons[type] || Type;
+    };
+
+    const getBlockLabel = (type) => {
+      const labels = {
+        hero: 'Hero Секция',
+        heading: 'Заголовок',
+        paragraph: 'Параграф',
+        button: 'Кнопка',
+        image: 'Изображение',
+        text: 'Текст',
+        features: 'Функции',
+        testimonials: 'Отзывы',
+        contact: 'Контакты',
+        footer: 'Футер'
+      };
+      return labels[type] || 'Блок';
+    };
+
     const handleExport = () => {
       const projectData = {
         name: 'Мой проект',
@@ -283,7 +369,6 @@ export default {
     };
 
     const startDrag = (blockId, event) => {
-      // Простая реализация drag - просто выбираем блок
       setActiveBlock(blockId);
       event.stopPropagation();
     };
@@ -309,6 +394,8 @@ export default {
       clearSelection,
       getBlockStyles,
       isValidImageUrl,
+      getBlockIcon,
+      getBlockLabel,
       handleExport,
       handleImageError,
       getDefaultContent,
@@ -318,7 +405,8 @@ export default {
       moveBlockDown,
       startDrag,
       toggleThemeWithRipple,
-      goToHome
+      goToHome,
+      goToTemplates
     };
   }
 }
@@ -872,5 +960,182 @@ export default {
 .blocks-container::-webkit-scrollbar-thumb:hover,
 .right-panel-content::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
+}
+
+/* Заголовок блока */
+.block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.block-type {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.block-type-icon {
+  opacity: 0.7;
+}
+
+.block-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Drag handle */
+.drag-handle {
+  cursor: grab;
+  color: var(--text-tertiary);
+  padding: 4px;
+  border-radius: 3px;
+  transition: all 0.2s;
+  opacity: 0;
+}
+
+.block-wrapper:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:hover {
+  background: var(--hover-color);
+  color: var(--text-primary);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Move buttons */
+.move-buttons {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 2;
+}
+
+.move-btn {
+  width: 24px;
+  height: 24px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.move-btn:hover:not(:disabled) {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.move-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Image placeholder */
+.image-placeholder {
+  padding: 3rem;
+  background: var(--bg-secondary);
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  color: var(--text-tertiary);
+  text-align: center;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.image-placeholder p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.image-hint {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-top: 0.5rem;
+}
+
+/* Empty state */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+  letter-spacing: 1px;
+  font-size: 0.9rem;
+  color: var(--text-tertiary);
+  gap: 1rem;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.empty-icon {
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+
+/* No selection state */
+.no-selection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  padding: 2rem;
+  text-align: center;
+  gap: 1rem;
+}
+
+/* Delete button */
+.delete-btn {
+  width: 24px;
+  height: 24px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  opacity: 0;
+}
+
+.block-wrapper:hover .delete-btn {
+  opacity: 1;
+}
+
+.delete-btn:hover {
+  background: #c82333;
+  transform: scale(1.1);
 }
 </style>

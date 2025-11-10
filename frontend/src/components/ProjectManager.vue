@@ -16,13 +16,16 @@
       <label>Действия:</label>
       <div class="project-actions">
         <button @click="saveProject" class="project-btn primary">
-          💾 Сохранить
+          <Save :size="16" />
+          Сохранить
         </button>
         <button @click="loadProject" class="project-btn">
-          📂 Загрузить
+          <FolderOpen :size="16" />
+          Загрузить
         </button>
         <button @click="newProject" class="project-btn">
-          🆕 Новый
+          <FilePlus :size="16" />
+          Новый
         </button>
       </div>
     </div>
@@ -36,17 +39,27 @@
           class="project-item"
           @click="loadSpecificProject(project)"
         >
-          <span class="project-title">{{ project.name }}</span>
-          <span class="project-date">{{ formatDate(project.savedAt) }}</span>
-          <button 
-            @click.stop="deleteProject(project.id)"
-            class="delete-project-btn"
-            title="Удалить проект"
-          >
-            ×
-          </button>
+          <div class="project-info">
+            <Folder :size="14" class="project-icon" />
+            <span class="project-title">{{ project.name }}</span>
+          </div>
+          <div class="project-meta">
+            <span class="project-date">{{ formatDate(project.savedAt) }}</span>
+            <button 
+              @click.stop="deleteProject(project.id)"
+              class="delete-project-btn"
+              title="Удалить проект"
+            >
+              <Trash2 :size="12" />
+            </button>
+          </div>
         </div>
       </div>
+    </div>
+
+    <div v-else class="empty-projects">
+      <FolderOpen :size="32" class="empty-icon" />
+      <p>Нет сохраненных проектов</p>
     </div>
   </div>
 </template>
@@ -55,6 +68,13 @@
 import { useEditorStore } from '../stores/editor';
 import { storeToRefs } from 'pinia';
 import { ref, computed, onMounted } from 'vue';
+import { 
+  Save, 
+  FolderOpen, 
+  FilePlus, 
+  Folder, 
+  Trash2 
+} from 'lucide-vue-next';
 
 const editorStore = useEditorStore();
 const { blocks } = storeToRefs(editorStore);
@@ -194,6 +214,7 @@ const formatDate = (dateString) => {
   background: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 0.9rem;
+  font-family: inherit;
 }
 
 .project-actions {
@@ -203,6 +224,9 @@ const formatDate = (dateString) => {
 }
 
 .project-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.8rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
@@ -211,6 +235,7 @@ const formatDate = (dateString) => {
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.8rem;
+  justify-content: center;
 }
 
 .project-btn.primary {
@@ -223,6 +248,7 @@ const formatDate = (dateString) => {
   background: var(--accent-color);
   color: white;
   border-color: var(--accent-color);
+  transform: translateY(-1px);
 }
 
 .projects-list {
@@ -233,7 +259,8 @@ const formatDate = (dateString) => {
 
 .project-item {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
   padding: 0.8rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
@@ -248,11 +275,28 @@ const formatDate = (dateString) => {
   transform: translateX(2px);
 }
 
+.project-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.project-icon {
+  opacity: 0.6;
+  color: var(--text-tertiary);
+}
+
 .project-title {
   font-weight: 500;
   color: var(--text-primary);
-  margin-bottom: 0.3rem;
   font-size: 0.9rem;
+}
+
+.project-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .project-date {
@@ -261,25 +305,45 @@ const formatDate = (dateString) => {
 }
 
 .delete-project-btn {
-  position: absolute;
-  top: 5px;
-  right: 5px;
   width: 20px;
   height: 20px;
   background: #dc3545;
   color: white;
   border: none;
-  border-radius: 50%;
+  border-radius: 3px;
   cursor: pointer;
-  font-size: 12px;
-  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s;
+  opacity: 0.7;
 }
 
 .delete-project-btn:hover {
   background: #c82333;
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.empty-projects {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-tertiary);
+  text-align: center;
+  gap: 1rem;
+}
+
+.empty-icon {
+  opacity: 0.3;
+}
+
+.empty-projects p {
+  margin: 0;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
 }
 
 /* Кастомный скроллбар */

@@ -1,5 +1,21 @@
 <template>
-  <div class="landing">
+  <div class="landing" :class="themeClass">
+    <!-- Фоновые изображения из public папки -->
+    <div class="background-container">
+      <img 
+        v-if="isDark" 
+        src="/Frame3.svg" 
+        alt="Dark theme background" 
+        class="background-image"
+      >
+      <img 
+        v-else 
+        src="/Frame4.svg" 
+        alt="Light theme background" 
+        class="background-image"
+      >
+    </div>
+
     <header class="header">
       <nav class="nav">
         <!-- Логотип слева -->
@@ -13,7 +29,7 @@
         <div class="nav-center">
           <div class="nav-menu">
             <span @click="goToEditor" class="nav-item">Конструктор</span>
-            <span @click="scrollToSection('templates')" class="nav-item">Шаблоны</span>
+            <span @click="goToTemplates" class="nav-item">Шаблоны</span>
             <span @click="scrollToSection('export')" class="nav-item">Экспорт</span>
           </div>
         </div>
@@ -30,49 +46,51 @@
       </nav>
     </header>
     
-    <!-- Остальная часть без изменений -->
-    <div class="hero">
-      <h1 class="hero-title">СОЗДАВАЙТЕ УМНЫЕ ЛЕНДИНГИ</h1>
-      <p class="hero-subtitle">Визуальный конструктор для быстрых результатов</p>
-      <div class="hero-stats">
-        <div class="hero-stat">
-          <span class="hero-stat-number">100+</span>
-          <span class="hero-stat-label">КЛИЕНТОВ</span>
+    <!-- Hero секция с оберткой для z-index -->
+    <div class="content-wrapper">
+      <div class="hero">
+        <h1 class="hero-title">СОЗДАВАЙТЕ УМНЫЕ ЛЕНДИНГИ</h1>
+        <p class="hero-subtitle">Визуальный конструктор для быстрых результатов</p>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hero-stat-number">100+</span>
+            <span class="hero-stat-label">КЛИЕНТОВ</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-number">300%</span>
+            <span class="hero-stat-label">РОСТ КОНВЕРСИИ</span>
+          </div>
         </div>
-        <div class="hero-stat">
-          <span class="hero-stat-number">300%</span>
-          <span class="hero-stat-label">РОСТ КОНВЕРСИИ</span>
-        </div>
+        <button class="cta-button" @click="goToEditor">
+          Начать создание
+        </button>
       </div>
-      <button class="cta-button" @click="goToEditor">
-        Начать создание
-      </button>
+      
+      <main class="main-content">
+        <section class="features">
+          <h2>Почему выбирают Digitalize?</h2>
+          <div class="features-grid">
+            <div class="feature">
+              <h3>🚀 Быстро</h3>
+              <p>Создавайте лендинги за минуты без навыков программирования</p>
+            </div>
+            <div class="feature">
+              <h3>🎨 Профессионально</h3>
+              <p>Современный дизайн и адаптивная верстка</p>
+            </div>
+            <div class="feature">
+              <h3>💾 Сохраняйте</h3>
+              <p>Все проекты сохраняются автоматически</p>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
-    
-    <main class="main-content">
-      <section class="features">
-        <h2>Почему выбирают Digitalize?</h2>
-        <div class="features-grid">
-          <div class="feature">
-            <h3>🚀 Быстро</h3>
-            <p>Создавайте лендинги за минуты без навыков программирования</p>
-          </div>
-          <div class="feature">
-            <h3>🎨 Профессионально</h3>
-            <p>Современный дизайн и адаптивная верстка</p>
-          </div>
-          <div class="feature">
-            <h3>💾 Сохраняйте</h3>
-            <p>Все проекты сохраняются автоматически</p>
-          </div>
-        </div>
-      </section>
-    </main>
   </div>
 </template>
 
 <script>
-import { inject } from 'vue'
+import { inject, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useThemeStore } from '../stores/theme'
 import { storeToRefs } from 'pinia'
@@ -85,12 +103,18 @@ export default {
     const { isDark } = storeToRefs(themeStore)
     const startRipple = inject('startRipple')
 
+    const themeClass = computed(() => isDark.value ? 'theme-dark' : 'theme-light')
+
     const toggleThemeWithRipple = (event) => {
       if (startRipple) {
         startRipple(event)
       } else {
         themeStore.toggleTheme()
       }
+    }
+
+    const goToTemplates = () => {
+      router.push('/templates')
     }
 
     const goToHome = () => {
@@ -107,8 +131,10 @@ export default {
 
     return {
       isDark,
+      themeClass,
       goToHome,
       goToEditor,
+      goToTemplates,
       toggleThemeWithRipple,
       scrollToSection
     }
@@ -121,6 +147,31 @@ export default {
   min-height: 100vh;
   background: var(--bg-primary);
   color: var(--text-primary);
+  position: relative;
+  overflow: auto; /* разрешаем скролл */
+}
+
+.background-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.background-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* вместо cover - сохраняет оригинальные пропорции */
+  object-position: top center; /* прикрепляем к верху */
+}
+
+/* Обертка для контента с z-index */
+.content-wrapper {
+  position: relative;
+  z-index: 1;
 }
 
 /* Новая навигация */
@@ -130,6 +181,7 @@ export default {
   align-items: center;
   padding: 1.5rem 3rem;
   position: relative;
+  z-index: 10;
 }
 
 /* Логотип слева - БЕЗ ВИДИМОГО БЛОКА */
@@ -196,7 +248,7 @@ export default {
   letter-spacing: 0.5px;
   position: relative;
   overflow: hidden;
-  font-family: inherit; /* Наследует monospace */
+  font-family: inherit;
 }
 
 .nav-item:hover {
@@ -260,12 +312,14 @@ export default {
 .hero {
   text-align: center;
   padding: 6rem 2rem;
+  position: relative;
+  z-index: 5;
 }
 
 .hero-title {
-  font-size: 3rem;
-  font-weight: 300;
-  letter-spacing: 3px;
+  font-size: 3.5rem;
+  font-weight: 700;
+  letter-spacing: 2px;
   margin-bottom: 1.5rem;
   text-transform: uppercase;
   color: var(--text-primary);
@@ -273,7 +327,9 @@ export default {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* Оставляем красивый шрифт для заголовка */
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  text-shadow: 3px 3px 0px rgba(59, 31, 161, 0.3);
+  line-height: 1.3;
 }
 
 .hero-subtitle {
@@ -283,7 +339,7 @@ export default {
   letter-spacing: 1px;
   color: var(--text-secondary);
   margin-bottom: 3rem;
-  font-family: inherit; /* Monospace для подзаголовка */
+  font-family: inherit;
 }
 
 .hero-stats {
@@ -304,7 +360,7 @@ export default {
   letter-spacing: 2px;
   color: #3b1fa1;
   margin-bottom: 0.5rem;
-  font-family: inherit; /* Monospace для цифр */
+  font-family: inherit;
 }
 
 .hero-stat-label {
@@ -313,7 +369,7 @@ export default {
   text-transform: uppercase;
   color: var(--text-tertiary);
   font-weight: 400;
-  font-family: inherit; /* Monospace для подписей */
+  font-family: inherit;
 }
 
 .cta-button {
@@ -328,12 +384,15 @@ export default {
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
-  font-family: inherit; /* Monospace для кнопки */
+  font-family: inherit;
+  position: relative;
+  z-index: 2;
 }
 
 .cta-button:hover {
   background: #4dabf7;
   transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(59, 31, 161, 0.3);
 }
 
 /* Features секция */
@@ -341,6 +400,8 @@ export default {
   padding: 6rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  position: relative;
+  z-index: 5;
 }
 
 .features h2 {
@@ -348,7 +409,7 @@ export default {
   font-size: 2.5rem;
   margin-bottom: 4rem;
   color: var(--text-primary);
-  font-family: inherit; /* Monospace для заголовка features */
+  font-family: inherit;
 }
 
 .features-grid {
@@ -364,24 +425,28 @@ export default {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(10px);
 }
 
 .feature:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent-color);
 }
 
 .feature h3 {
   font-size: 1.5rem;
   margin-bottom: 1rem;
   color: var(--text-primary);
-  font-family: inherit; /* Monospace для заголовков фич */
+  font-family: inherit;
 }
 
 .feature p {
   color: var(--text-secondary);
   line-height: 1.6;
-  font-family: inherit; /* Monospace для текста фич */
+  font-family: inherit;
 }
 
 /* CSS переменные для инвертирования лого в темной теме */
@@ -391,5 +456,29 @@ export default {
 
 .theme-light {
   --logo-invert: 0;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .nav {
+    padding: 1rem;
+  }
+  
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-stats {
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .background-image {
+    opacity: 0.1;
+  }
 }
 </style>
