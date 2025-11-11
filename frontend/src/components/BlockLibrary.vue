@@ -7,6 +7,25 @@
     
     <div class="library-content">
       <div class="library-sections">
+        <!-- Контейнеры и секции -->
+        <div class="section">
+          <h4 class="section-title">СТРУКТУРА</h4>
+          <div class="blocks-grid">
+            <div 
+              v-for="blockType in structureBlocks" 
+              :key="blockType.type"
+              class="block-item" 
+              draggable="true"
+              @dragstart="onDragStart(blockType, $event)"
+            >
+              <div class="block-icon">
+                <component :is="blockType.icon" :size="20" />
+              </div>
+              <span class="block-name">{{ blockType.name }}</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Основные блоки -->
         <div class="section">
           <h4 class="section-title">ОСНОВНЫЕ</h4>
@@ -26,12 +45,12 @@
           </div>
         </div>
         
-        <!-- Секции -->
+        <!-- Медиа блоки -->
         <div class="section">
-          <h4 class="section-title">СЕКЦИИ</h4>
+          <h4 class="section-title">МЕДИА</h4>
           <div class="blocks-grid">
             <div 
-              v-for="blockType in sectionBlocks" 
+              v-for="blockType in mediaBlocks" 
               :key="blockType.type"
               class="block-item" 
               draggable="true"
@@ -61,28 +80,38 @@ import {
   Wrench,
   MessageCircle,
   Mail,
-  Minus
+  Minus,
+  Container,
+  Columns,
+  PanelTop
 } from 'lucide-vue-next';
 
 const editorStore = useEditorStore();
 
-const basicBlocks = [
-  { type: 'heading', name: 'Заголовок', icon: Heading },
-  { type: 'paragraph', name: 'Параграф', icon: Pilcrow },
-  { type: 'button', name: 'Кнопка', icon: MousePointerClick },
-  { type: 'image', name: 'Изображение', icon: Image },
-  { type: 'text', name: 'Текст', icon: Type }
-];
-
-const sectionBlocks = [
-  { type: 'hero', name: 'Hero Секция', icon: Star },
-  { type: 'features', name: 'Функции', icon: Wrench },
-  { type: 'testimonials', name: 'Отзывы', icon: MessageCircle },
-  { type: 'contact', name: 'Контакты', icon: Mail },
+const structureBlocks = [
+  { type: 'container', name: 'Контейнер', icon: Container },
+  { type: 'section', name: 'Секция', icon: PanelTop },
+  { type: 'columns', name: 'Колонки', icon: Columns },
+  { type: 'header', name: 'Шапка', icon: PanelTop },
   { type: 'footer', name: 'Футер', icon: Minus }
 ];
 
-const allBlocks = [...basicBlocks, ...sectionBlocks];
+const basicBlocks = [
+  { type: 'hero', name: 'Hero Секция', icon: Star },
+  { type: 'heading', name: 'Заголовок', icon: Heading },
+  { type: 'paragraph', name: 'Параграф', icon: Pilcrow },
+  { type: 'button', name: 'Кнопка', icon: MousePointerClick },
+  { type: 'text', name: 'Текст', icon: Type }
+];
+
+const mediaBlocks = [
+  { type: 'image', name: 'Изображение', icon: Image },
+  { type: 'features', name: 'Функции', icon: Wrench },
+  { type: 'testimonials', name: 'Отзывы', icon: MessageCircle },
+  { type: 'contact', name: 'Контакты', icon: Mail }
+];
+
+const allBlocks = [...structureBlocks, ...basicBlocks, ...mediaBlocks];
 
 const onDragStart = (blockType, event) => {
   console.log('Drag start:', blockType);
@@ -168,7 +197,7 @@ const onDragStart = (blockType, event) => {
   padding: 1rem 1.2rem;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: grab;
   transition: all 0.3s ease;
   position: relative;

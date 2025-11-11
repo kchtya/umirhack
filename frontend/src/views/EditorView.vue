@@ -1,6 +1,6 @@
 <template>
-  <div class="editor-view" :class="themeClass">
-    <header class="header">
+  <div class="editor-view" :class="themeClass" :style="pageStyles">
+    <header class="header" v-if="!fullscreenPreview">
       <nav class="nav">
         <div class="logo-section">
           <div class="logo-image" @click="goToHome">
@@ -16,22 +16,12 @@
           </div>
         </div>
         
-        <!-- ОБНОВЛЕНО: Правильные кнопки авторизации -->
         <div class="nav-right">
           <div class="auth-buttons">
-            <!-- Показываем кнопки входа/регистрации -->
             <div class="guest-buttons">
               <button class="auth-btn login-btn" @click="goToLogin">Войти</button>
               <button class="auth-btn register-btn" @click="goToRegister">Регистрация</button>
             </div>
-            
-            <!-- Закомментировано - будет показываться когда пользователь авторизован -->
-            <!--
-            <div class="user-buttons">
-              <button class="auth-btn account-btn" @click="goToAccount">Аккаунт</button>
-              <button class="auth-btn logout-btn" @click="handleLogout">Выйти</button>
-            </div>
-            -->
           </div>
           <button class="theme-toggle" @click="toggleThemeWithRipple">
             <span class="theme-icon">{{ isDark ? '☀️' : '🌙' }}</span>
@@ -40,8 +30,7 @@
       </nav>
     </header>
     
-    <!-- ОБНОВЛЕНО: Основной контент в main -->
-    <main class="main-content">
+    <main class="main-content" v-if="!fullscreenPreview">
       <div class="editor-layout">
         <!-- Левая панель: Библиотека блоков -->
         <div class="left-panel">
@@ -60,12 +49,18 @@
         >
           <div class="canvas">
             <div class="canvas-header">
-              <h3>РАБОЧАЯ ОБЛАСТЬ</h3>
+              <h3>РЕДАКТОР САЙТА</h3>
               <div class="canvas-stats">
                 <div class="stat">
                   <span class="stat-number">{{ blocksCount }}</span>
                   <span class="stat-label">БЛОКОВ</span>
                 </div>
+                <button @click="toggleFullscreenPreview" class="preview-fullscreen-btn" title="Полноэкранный предпросмотр">
+                  📺 Полный экран
+                </button>
+                <button @click="clearAllBlocks" class="clear-btn" title="Очистить все блоки">
+                  Очистить
+                </button>
               </div>
             </div>
             
@@ -75,124 +70,23 @@
                 <Download :size="48" />
               </div>
               <p>ПЕРЕТАЩИТЕ БЛОКИ ДЛЯ НАЧАЛА РАБОТЫ</p>
+              <p class="empty-hint">Начните с контейнера или секции</p>
+              <button @click="initializeStructuralBlocks" class="btn-primary">
+                Создать базовую структуру
+              </button>
             </div>
             
             <!-- Блоки на холсте -->
             <div class="blocks-container">
-              <div 
-                v-for="(block, index) in blocks" 
+              <BlockComponent 
+                v-for="block in blocks" 
                 :key="block.id"
-                class="block-wrapper"
-                :class="{ active: activeBlock?.id === block.id }"
-                @click.stop="setActiveBlock(block.id)"
-                :style="getBlockStyles(block)"
-              >
-                <!-- Заголовок блока с иконкой -->
-                <div class="block-header">
-                  <div class="block-type">
-                    <component :is="getBlockIcon(block.type)" :size="16" class="block-type-icon" />
-                    <span class="block-type-label">{{ getBlockLabel(block.type) }}</span>
-                  </div>
-                  <div class="block-actions">
-                    <!-- Drag handle -->
-                    <div class="drag-handle" title="Перетащить блок" @mousedown="startDrag(block.id, $event)">
-                      <GripVertical :size="16" />
-                    </div>
-                    
-                    <!-- Кнопка удаления -->
-                    <button 
-                      @click.stop="deleteBlock(block.id)"
-                      class="delete-btn"
-                      title="Удалить блок"
-                    >
-                      <X :size="16" />
-                    </button>
-                  </div>
-                </div>
-                
-                <!-- Hero блок -->
-                <div v-if="block.type === 'hero'" class="block-element hero">
-                  <h1>{{ block.content }}</h1>
-                </div>
-                
-                <!-- Heading блок -->
-                <div v-else-if="block.type === 'heading'" class="block-element heading">
-                  <h2>{{ block.content }}</h2>
-                </div>
-                
-                <!-- Paragraph блок -->
-                <div v-else-if="block.type === 'paragraph'" class="block-element paragraph">
-                  <p>{{ block.content }}</p>
-                </div>
-                
-                <!-- Button блок -->
-                <div v-else-if="block.type === 'button'" class="block-element button">
-                  <button>{{ block.content }}</button>
-                </div>
-                
-                <!-- Image блок -->
-                <div v-else-if="block.type === 'image'" class="block-element image">
-                  <img 
-                    v-if="isValidImageUrl(block.content)" 
-                    :src="block.content" 
-                    alt="Image block" 
-                    @error="handleImageError"
-                    :style="{ 
-                      width: block.styles?.width || '100%',
-                      height: block.styles?.height || 'auto',
-                      borderRadius: block.styles?.borderRadius || '8px'
-                    }"
-                  >
-                  <div v-else class="image-placeholder">
-                    <Image :size="32" />
-                    <p>Введите URL изображения</p>
-                    <div class="image-hint">Например: https://images.unsplash.com/photo-1550745165-9bc0b252726f</div>
-                  </div>
-                </div>
-                
-                <!-- Text блок -->
-                <div v-else-if="block.type === 'text'" class="block-element text">
-                  <p>{{ block.content }}</p>
-                </div>
-                
-                <!-- Features блок -->
-                <div v-else-if="block.type === 'features'" class="block-element features">
-                  <h3>Функции</h3>
-                  <p>{{ block.content }}</p>
-                </div>
-                
-                <!-- Testimonials блок -->
-                <div v-else-if="block.type === 'testimonials'" class="block-element testimonials">
-                  <h3>Отзывы</h3>
-                  <p>{{ block.content }}</p>
-                </div>
-                
-                <!-- Contact блок -->
-                <div v-else-if="block.type === 'contact'" class="block-element contact">
-                  <h3>Контакты</h3>
-                  <p>{{ block.content }}</p>
-                </div>
-                
-                <!-- Footer блок -->
-                <div v-else-if="block.type === 'footer'" class="block-element footer">
-                  <p>{{ block.content }}</p>
-                </div>
-                
-                <!-- Неизвестный блок -->
-                <div v-else class="block-element unknown">
-                  {{ block.content }}
-                </div>
-
-                <!-- Кнопки перемещения -->
-                <div v-if="activeBlock?.id === block.id" class="move-buttons">
-                  <button @click.stop="moveBlockUp(index)" class="move-btn" :disabled="index === 0" title="Переместить вверх">
-                    <ChevronUp :size="14" />
-                  </button>
-                  <button @click.stop="moveBlockDown(index)" class="move-btn" :disabled="index === blocks.length - 1" title="Переместить вниз">
-                    <ChevronDown :size="14" />
-                  </button>
-                </div>
-              </div>
+                :block="block"
+                :level="0"
+                @block-click="setActiveBlock"
+                @block-delete="deleteBlock"
+                @block-duplicate="duplicateBlock"
+              />
             </div>
           </div>
         </div>
@@ -200,20 +94,127 @@
         <!-- Правая панель: Редактор и инструменты -->
         <div class="right-panel">
           <div class="right-panel-content">
-            <BlockEditor v-if="activeBlock" />
-            <Toolbar v-if="activeBlock" />
-            <ProjectManager v-if="!activeBlock" />
-            <div v-if="!activeBlock && blocksCount > 0" class="no-selection">
-              <MousePointerClick :size="32" />
-              <p>Выберите блок для редактирования</p>
-            </div>
+            <PageSettings v-if="!activeBlock" @fullscreen-preview="toggleFullscreenPreview" />
+            <Toolbar v-else />
           </div>
         </div>
       </div>
     </main>
 
-    <!-- ДОБАВЛЕН ПОДВАЛ -->
-    <AppFooter />
+    <!-- Полноэкранный предпросмотр -->
+    <div v-if="fullscreenPreview" class="fullscreen-preview">
+      <div class="preview-header">
+        <button @click="toggleFullscreenPreview" class="close-preview-btn">
+          ✕ Закрыть предпросмотр
+        </button>
+        <div class="preview-info">
+          Предпросмотр сайта - <span class="preview-url">mysite.com</span>
+        </div>
+      </div>
+      <div class="preview-content" :style="previewStyles">
+        <!-- Рендерим блоки как в реальном сайте -->
+        <div v-for="block in blocks" :key="block.id" class="preview-block" :style="block.styles">
+          <!-- Header -->
+          <div v-if="block.type === 'header'" class="preview-header-block">
+            <div class="preview-header-inner">
+              <div class="preview-logo">ЛОГОТИП</div>
+              <nav class="preview-nav">
+                <span>Главная</span>
+                <span>О нас</span>
+                <span>Контакты</span>
+              </nav>
+            </div>
+          </div>
+
+          <!-- Hero -->
+          <div v-else-if="block.type === 'hero'" class="preview-hero">
+            <h1>{{ block.content || 'Заголовок героя' }}</h1>
+            <p>Описание hero секции</p>
+          </div>
+
+          <!-- Heading -->
+          <div v-else-if="block.type === 'heading'" class="preview-heading">
+            <h2>{{ block.content || 'Заголовок раздела' }}</h2>
+          </div>
+
+          <!-- Paragraph -->
+          <div v-else-if="block.type === 'paragraph'" class="preview-paragraph">
+            <p>{{ block.content || 'Текст параграфа...' }}</p>
+          </div>
+
+          <!-- Button -->
+          <div v-else-if="block.type === 'button'" class="preview-button">
+            <button class="preview-btn-element">{{ block.content || 'Нажмите меня' }}</button>
+          </div>
+
+          <!-- Image -->
+          <div v-else-if="block.type === 'image'" class="preview-image">
+            <img 
+              v-if="isValidImageUrl(block.content)" 
+              :src="block.content" 
+              alt="Preview"
+              @error="handleImageError"
+            >
+            <div v-else class="preview-image-placeholder">
+              📷 Изображение
+            </div>
+          </div>
+
+          <!-- Text -->
+          <div v-else-if="block.type === 'text'" class="preview-text">
+            <p>{{ block.content || 'Простой текст...' }}</p>
+          </div>
+
+          <!-- Container/Section -->
+          <div v-else-if="block.type === 'container' || block.type === 'section'" class="preview-container-block">
+            <div class="preview-container-inner">
+              <div v-if="!block.children || block.children.length === 0" class="preview-empty">
+                Содержимое
+              </div>
+              <div v-else class="preview-children">
+                <div v-for="child in block.children" :key="child.id" class="preview-child" :style="child.styles">
+                  {{ child.content || child.name }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div v-else-if="block.id === 'body'" class="preview-body">
+            <div class="preview-body-inner">
+              <div v-if="!block.children || block.children.length === 0" class="preview-empty-body">
+                Основное содержимое страницы
+              </div>
+              <div v-else class="preview-body-children">
+                <div v-for="child in block.children" :key="child.id" class="preview-body-child" :style="child.styles">
+                  {{ child.content || child.name }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div v-else-if="block.type === 'footer'" class="preview-footer">
+            <div class="preview-footer-inner">
+              <p>{{ block.content || '© 2024 Мой сайт. Все права защищены.' }}</p>
+            </div>
+          </div>
+
+          <!-- Generic -->
+          <div v-else class="preview-generic">
+            {{ block.content || block.name }}
+          </div>
+        </div>
+
+        <!-- Если нет блоков -->
+        <div v-if="blocks.length === 0" class="preview-empty-state">
+          <h3>Пустая страница</h3>
+          <p>Добавьте блоки в конструкторе</p>
+        </div>
+      </div>
+    </div>
+
+    <AppFooter v-if="!fullscreenPreview" />
   </div>
 </template>
 
@@ -222,61 +223,80 @@ import { useEditorStore } from '../stores/editor';
 import { useThemeStore } from '../stores/theme';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import BlockLibrary from '../components/BlockLibrary.vue';
-import BlockEditor from '../components/BlockEditor.vue';
 import Toolbar from '../components/Toolbar.vue';
-import ProjectManager from '../components/ProjectManager.vue';
+import PageSettings from '../components/PageSettings.vue';
 import AppFooter from '../components/AppFooter.vue';
+import BlockComponent from '../components/BlockComponent.vue';
 
 // Иконки Lucide
 import { 
-  Download,
-  GripVertical,
-  X,
-  ChevronUp,
-  ChevronDown,
-  Image,
-  MousePointerClick,
-  Heading,
-  Pilcrow,
-  MousePointerClick as ButtonIcon,
-  Type,
-  Star,
-  Wrench,
-  MessageCircle,
-  Mail,
-  Minus
+  Download
 } from 'lucide-vue-next';
 
 export default {
   name: 'EditorView',
   components: {
     BlockLibrary,
-    BlockEditor,
     Toolbar,
-    ProjectManager,
+    PageSettings,
     AppFooter,
-    Download,
-    GripVertical,
-    X,
-    ChevronUp,
-    ChevronDown,
-    Image,
-    MousePointerClick
+    BlockComponent,
+    Download
   },
   setup() {
     const editorStore = useEditorStore();
     const themeStore = useThemeStore();
     const router = useRouter();
     
-    const { blocks, activeBlock, blocksCount } = storeToRefs(editorStore);
+    const { blocks, activeBlock, blocksCount, pageSettings } = storeToRefs(editorStore);
     const { isDark } = storeToRefs(themeStore);
-    const { addBlock, setActiveBlock, deleteBlock, getDefaultContent, moveBlock } = editorStore;
+    const { 
+      addBlock, 
+      setActiveBlock, 
+      deleteBlock, 
+      duplicateBlock, 
+      initializeStructuralBlocks,
+      clearAllBlocks 
+    } = editorStore;
 
     const themeClass = computed(() => isDark.value ? 'theme-dark' : 'theme-light');
-
+    const fullscreenPreview = ref(false);
     const isDragOver = ref(false);
+
+    const pageStyles = computed(() => {
+      const styles = {
+        backgroundColor: pageSettings.value.backgroundColor || 'var(--bg-primary)',
+        minHeight: '100vh',
+        transition: 'all 0.3s ease'
+      }
+
+      if (pageSettings.value.backgroundImage && pageSettings.value.backgroundImage !== '') {
+        styles.backgroundImage = `url(${pageSettings.value.backgroundImage})`
+        styles.backgroundSize = pageSettings.value.backgroundSize || 'cover'
+        styles.backgroundPosition = pageSettings.value.backgroundPosition || 'center'
+        styles.backgroundRepeat = 'no-repeat'
+      }
+
+      return styles
+    });
+
+    const previewStyles = computed(() => {
+      const styles = {
+        backgroundColor: pageSettings.value.backgroundColor || '#ffffff',
+        minHeight: '100vh'
+      };
+
+      if (pageSettings.value.backgroundImage && pageSettings.value.backgroundImage !== '') {
+        styles.backgroundImage = `url(${pageSettings.value.backgroundImage})`;
+        styles.backgroundSize = pageSettings.value.backgroundSize || 'cover';
+        styles.backgroundPosition = pageSettings.value.backgroundPosition || 'center';
+        styles.backgroundRepeat = 'no-repeat';
+      }
+
+      return styles;
+    });
 
     const handleDragOver = (event) => {
       event.preventDefault();
@@ -316,51 +336,6 @@ export default {
       setActiveBlock(null);
     };
 
-    const getBlockStyles = (block) => {
-      const styles = { ...block.styles };
-      if (!styles.fontFamily || styles.fontFamily === 'inherit') {
-        styles.fontFamily = 'JetBrains Mono, IBM Plex Mono, monospace';
-      }
-      return styles;
-    };
-
-    const isValidImageUrl = (url) => {
-      if (!url || url === getDefaultContent('image')) return false;
-      return url.startsWith('http') || url.startsWith('data:image');
-    };
-
-    const getBlockIcon = (type) => {
-      const icons = {
-        hero: Star,
-        heading: Heading,
-        paragraph: Pilcrow,
-        button: ButtonIcon,
-        image: Image,
-        text: Type,
-        features: Wrench,
-        testimonials: MessageCircle,
-        contact: Mail,
-        footer: Minus
-      };
-      return icons[type] || Type;
-    };
-
-    const getBlockLabel = (type) => {
-      const labels = {
-        hero: 'Hero Секция',
-        heading: 'Заголовок',
-        paragraph: 'Параграф',
-        button: 'Кнопка',
-        image: 'Изображение',
-        text: 'Текст',
-        features: 'Функции',
-        testimonials: 'Отзывы',
-        contact: 'Контакты',
-        footer: 'Футер'
-      };
-      return labels[type] || 'Блок';
-    };
-
     const handleExport = () => {
       const projectData = {
         name: 'Мой проект',
@@ -377,30 +352,12 @@ export default {
       link.click();
     };
 
-    const handleImageError = (event) => {
-      console.log('Image load error');
-      event.target.style.display = 'none';
-    };
-
-    const moveBlockUp = (index) => {
-      if (index > 0) {
-        moveBlock(index, index - 1);
-      }
-    };
-
-    const moveBlockDown = (index) => {
-      if (index < blocks.value.length - 1) {
-        moveBlock(index, index + 1);
-      }
-    };
-
-    const startDrag = (blockId, event) => {
-      setActiveBlock(blockId);
-      event.stopPropagation();
-    };
-
     const toggleThemeWithRipple = (event) => {
       themeStore.toggleTheme();
+    };
+
+    const toggleFullscreenPreview = () => {
+      fullscreenPreview.value = !fullscreenPreview.value;
     };
 
     const goToHome = () => {
@@ -415,16 +372,28 @@ export default {
       router.push('/register');
     };
 
-    // ОБНОВЛЕНО: Добавлены методы для аккаунта
     const goToAccount = () => {
       router.push('/account');
     };
 
     const handleLogout = () => {
       console.log('Logout');
-      // Здесь будет логика выхода когда появится бэкенд
       router.push('/');
     };
+
+    const isValidImageUrl = (url) => {
+      if (!url) return false;
+      return url.startsWith('http') || url.startsWith('data:image');
+    };
+
+    const handleImageError = (event) => {
+      event.target.style.display = 'none';
+    };
+
+    // Инициализация структурных блоков при загрузке
+    onMounted(() => {
+      initializeStructuralBlocks();
+    });
 
     return {
       blocks,
@@ -432,47 +401,46 @@ export default {
       blocksCount,
       isDark,
       themeClass,
+      fullscreenPreview,
       isDragOver,
+      pageStyles,
+      previewStyles,
       handleDrop,
       handleDragOver,
       handleDragEnter,
       handleDragLeave,
       clearSelection,
-      getBlockStyles,
-      isValidImageUrl,
-      getBlockIcon,
-      getBlockLabel,
       handleExport,
-      handleImageError,
-      getDefaultContent,
       setActiveBlock,
       deleteBlock,
-      moveBlockUp,
-      moveBlockDown,
-      startDrag,
+      duplicateBlock,
+      initializeStructuralBlocks,
+      clearAllBlocks,
       toggleThemeWithRipple,
+      toggleFullscreenPreview,
       goToHome,
       goToTemplates,
       goToLogin,
       goToRegister,
       goToAccount,
-      handleLogout
+      handleLogout,
+      isValidImageUrl,
+      handleImageError
     };
   }
 }
 </script>
 
 <style scoped>
-/* ОБНОВЛЕНО: Flexbox layout для прижатия подвала к низу */
 .editor-view {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
+  color: var(--text-primary);
   transition: all 0.3s ease;
 }
 
-/* ОБНОВЛЕНО: Основной контент занимает все доступное пространство */
 .main-content {
   flex: 1;
   display: flex;
@@ -559,13 +527,11 @@ export default {
   transform: translateY(-1px);
 }
 
-/* ОБНОВЛЕНО: Стиль для текущей страницы */
 .nav-item.current-page {
   color: var(--text-primary);
   background: var(--accent-color);
 }
 
-/* ОБНОВЛЕНО: Правая часть с авторизацией */
 .nav-right {
   flex: 1;
   display: flex;
@@ -614,22 +580,6 @@ export default {
   transform: translateY(-1px);
 }
 
-/* ОБНОВЛЕНО: Стили для кнопок аккаунта (пока не используются) */
-.account-btn {
-  background: var(--accent-color);
-  color: white;
-  border-color: var(--accent-color);
-}
-
-.logout-btn {
-  background: transparent;
-  color: var(--text-primary);
-}
-
-.logout-btn:hover {
-  background: var(--hover-color);
-}
-
 .theme-toggle {
   position: relative;
   background: var(--bg-tertiary);
@@ -657,7 +607,6 @@ export default {
   position: relative;
 }
 
-/* ОБНОВЛЕНО: CSS переменные для инвертирования лого */
 .theme-dark {
   --logo-invert: 1;
 }
@@ -666,7 +615,6 @@ export default {
   --logo-invert: 0;
 }
 
-/* ОБНОВЛЕНО: Основной layout редактора */
 .editor-layout {
   display: flex;
   flex: 1;
@@ -674,16 +622,15 @@ export default {
   overflow: hidden;
 }
 
-/* Левая панель */
 .left-panel {
   width: 280px;
   flex-shrink: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  border-right: 1px solid var(--border-color);
 }
 
-/* Центральная панель */
 .center-panel {
   flex: 1;
   background: var(--bg-primary);
@@ -692,11 +639,20 @@ export default {
   overflow: hidden;
   transition: all 0.3s ease;
   border: 2px solid transparent;
+  position: relative;
 }
 
-.center-panel.drag-over {
-  background: rgba(59, 31, 161, 0.1);
+.center-panel.drag-over::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(59, 31, 161, 0.05);
   border: 2px dashed #3b1fa1;
+  pointer-events: none;
+  z-index: 5;
 }
 
 .canvas {
@@ -710,7 +666,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2rem;
+  padding: 1.5rem 2rem;
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-primary);
   z-index: 10;
@@ -722,11 +678,12 @@ export default {
   letter-spacing: 2px;
   opacity: 0.8;
   color: var(--text-primary);
+  font-size: 0.9rem;
 }
 
 .canvas-stats {
   display: flex;
-  gap: 3rem;
+  gap: 2rem;
   align-items: center;
 }
 
@@ -736,27 +693,61 @@ export default {
 
 .stat-number {
   display: block;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 300;
   letter-spacing: 1px;
   color: #3b1fa1;
 }
 
 .stat-label {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   opacity: 0.6;
   letter-spacing: 1px;
   color: var(--text-tertiary);
+  text-transform: uppercase;
 }
 
-/* Контейнер блоков с прокруткой */
+.preview-fullscreen-btn {
+  padding: 8px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.preview-fullscreen-btn:hover {
+  background: #34ce57;
+  transform: translateY(-1px);
+}
+
+.clear-btn {
+  padding: 8px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.8rem;
+}
+
+.clear-btn:hover {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
 .blocks-container {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem 0;
+  padding: 0;
+  background: transparent;
 }
 
-/* Правая панель */
 .right-panel {
   width: 320px;
   flex-shrink: 0;
@@ -773,140 +764,73 @@ export default {
   overflow: hidden;
 }
 
-.no-selection {
+.empty-state {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--bg-tertiary);
-  color: var(--text-tertiary);
-  font-size: 0.9rem;
+  opacity: 0.5;
   letter-spacing: 1px;
-  padding: 2rem;
-  text-align: center;
-}
-
-/* Блоки на холсте */
-.block-wrapper {
-  position: relative;
-  margin: 15px auto;
-  padding: 20px;
-  background: var(--bg-tertiary);
-  border: 2px solid transparent;
-  border-radius: 8px;
-  transition: all 0.2s;
-  cursor: pointer;
-  min-height: 60px;
-  max-width: 800px;
-  width: calc(100% - 4rem);
-}
-
-.block-wrapper:hover {
-  border-color: var(--border-color);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.block-wrapper.active {
-  border-color: #4dabf7;
-  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-}
-
-/* Drag handle */
-.drag-handle {
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  cursor: grab;
+  font-size: 0.9rem;
   color: var(--text-tertiary);
-  font-size: 16px;
-  padding: 5px;
-  opacity: 0;
-  transition: opacity 0.2s;
-  z-index: 2;
-}
-
-.block-wrapper:hover .drag-handle {
-  opacity: 1;
-}
-
-.drag-handle:active {
-  cursor: grabbing;
-}
-
-/* Move buttons */
-.move-buttons {
-  position: absolute;
-  top: 5px;
-  right: 35px;
-  display: flex;
-  gap: 2px;
-  z-index: 2;
-}
-
-.move-btn {
-  width: 24px;
-  height: 24px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 3px;
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.move-btn:hover:not(:disabled) {
-  background: var(--accent-color);
-  color: white;
-  border-color: var(--accent-color);
-}
-
-.move-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.block-element {
-  margin: 0;
-  font-family: inherit;
-}
-
-/* Hero блок */
-.block-element.hero {
-  color: white;
+  gap: 1.5rem;
   padding: 4rem 2rem;
   text-align: center;
-  border-radius: 12px;
-  font-weight: bold;
 }
 
-.block-element.hero h1 {
-  margin: 0;
-  font-weight: 700;
+.empty-icon {
+  opacity: 0.5;
+  margin-bottom: 1rem;
 }
 
-/* Heading блок */
-.block-element.heading h2 {
-  margin: 0;
-  font-weight: 600;
-  color: var(--text-primary);
+.empty-hint {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-top: 0.5rem;
 }
 
-/* Paragraph блок */
-.block-element.paragraph p {
-  margin: 0;
-  line-height: 1.6;
-  color: var(--text-secondary);
-}
-
-/* Button блок */
-.block-element.button button {
+.btn-primary {
   padding: 12px 24px;
   background: #3b1fa1;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: #4dabf7;
+  transform: translateY(-2px);
+}
+
+/* Полноэкранный предпросмотр */
+.fullscreen-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-header {
+  background: #f5f5f5;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.close-preview-btn {
+  padding: 10px 20px;
+  background: #dc3545;
   color: white;
   border: none;
   border-radius: 6px;
@@ -915,353 +839,279 @@ export default {
   transition: all 0.2s;
 }
 
-.block-element.button button:hover {
-  background: #4dabf7;
+.close-preview-btn:hover {
+  background: #c82333;
   transform: translateY(-1px);
 }
 
-/* Image блок */
-.block-element.image {
-  text-align: center;
-  position: relative;
-  min-height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.preview-info {
+  color: #666;
+  font-size: 0.9rem;
 }
 
-.block-element.image img {
+.preview-url {
+  font-weight: 500;
+  color: #3b1fa1;
+}
+
+.preview-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Preview block styles */
+.preview-block {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.preview-header-block {
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.preview-header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+}
+
+.preview-logo {
+  font-weight: bold;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.preview-nav {
+  display: flex;
+  gap: 20px;
+}
+
+.preview-nav span {
+  color: #666;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.preview-nav span:hover {
+  color: #3b1fa1;
+}
+
+.preview-hero {
+  text-align: center;
+  padding: 80px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.preview-hero h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.preview-hero p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.preview-heading {
+  padding: 40px 20px;
+}
+
+.preview-heading h2 {
+  margin: 0;
+  font-size: 2.2rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.preview-paragraph {
+  padding: 20px;
+}
+
+.preview-paragraph p {
+  margin: 0;
+  line-height: 1.6;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.preview-button {
+  padding: 30px 20px;
+  text-align: center;
+}
+
+.preview-btn-element {
+  padding: 15px 30px;
+  background: #3b1fa1;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.preview-btn-element:hover {
+  background: #4dabf7;
+  transform: translateY(-2px);
+}
+
+.preview-image {
+  padding: 20px;
+  text-align: center;
+}
+
+.preview-image img {
   max-width: 100%;
   max-height: 400px;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.image-placeholder {
-  padding: 3rem;
-  background: var(--bg-secondary);
-  border: 2px dashed var(--border-color);
+.preview-image-placeholder {
+  padding: 60px 40px;
+  background: #f5f5f5;
+  border: 2px dashed #ddd;
   border-radius: 8px;
-  color: var(--text-tertiary);
+  color: #999;
   text-align: center;
-  width: 100%;
+  font-size: 1.1rem;
 }
 
-/* Text блок */
-.block-element.text {
-  padding: 15px;
-  background: var(--bg-secondary);
-  border-radius: 6px;
-  color: var(--text-primary);
+.preview-text {
+  padding: 20px;
+}
+
+.preview-text p {
+  margin: 0;
+  color: #333;
   line-height: 1.6;
 }
 
-/* Features блок */
-.block-element.features {
-  padding: 2rem;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-  border-radius: 12px;
-  text-align: center;
+.preview-container-block {
+  padding: 30px 20px;
 }
 
-.block-element.features h3 {
-  margin: 0 0 1rem 0;
-}
-
-/* Testimonials блок */
-.block-element.testimonials {
-  padding: 2rem;
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  color: white;
-  border-radius: 12px;
-  text-align: center;
-}
-
-.block-element.testimonials h3 {
-  margin: 0 0 1rem 0;
-}
-
-/* Contact блок */
-.block-element.contact {
-  padding: 2rem;
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-  color: white;
-  border-radius: 12px;
-  text-align: center;
-}
-
-.block-element.contact h3 {
-  margin: 0 0 1rem 0;
-}
-
-/* Footer блок */
-.block-element.footer {
-  padding: 2rem;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
+.preview-container-inner {
+  border: 1px dashed #ddd;
   border-radius: 8px;
+  min-height: 150px;
+  padding: 30px;
+}
+
+.preview-empty {
+  color: #999;
   text-align: center;
-  border-top: 3px solid #3b1fa1;
+  padding: 40px;
+  font-size: 1.1rem;
 }
 
-/* Неизвестный блок */
-.block-element.unknown {
-  padding: 20px;
-  background: var(--bg-secondary);
-  border: 2px dashed var(--border-color);
-  border-radius: 8px;
-  color: var(--text-tertiary);
-  text-align: center;
-  font-style: italic;
-}
-
-.delete-btn {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 24px;
-  height: 24px;
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  z-index: 5;
-}
-
-.delete-btn:hover {
-  background: #c82333;
-  transform: scale(1.1);
-}
-
-.empty-state {
-  flex: 1;
+.preview-children {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.5;
-  letter-spacing: 1px;
-  font-size: 0.9rem;
-  color: var(--text-tertiary);
-  gap: 1rem;
-  padding: 4rem 2rem;
+  gap: 15px;
+}
+
+.preview-child {
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  border: 1px solid #eee;
+  color: #666;
+}
+
+.preview-body {
+  padding: 40px 20px;
+}
+
+.preview-body-inner {
+  min-height: 300px;
+}
+
+.preview-empty-body {
+  color: #999;
+  text-align: center;
+  padding: 80px 20px;
+  border: 2px dashed #eee;
+  border-radius: 8px;
+  font-size: 1.1rem;
+}
+
+.preview-body-children {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.preview-body-child {
+  padding: 20px;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.preview-footer {
+  background: #2c3e50;
+  color: white;
+  padding: 40px 20px;
+}
+
+.preview-footer-inner {
   text-align: center;
 }
 
-.empty-icon {
-  font-size: 3rem;
-  opacity: 0.5;
-  margin-bottom: 1rem;
+.preview-footer p {
+  margin: 0;
+  color: #ccc;
+  font-size: 1.1rem;
 }
 
-/* Кастомные скроллбары */
-.blocks-container::-webkit-scrollbar,
-.right-panel-content::-webkit-scrollbar {
+.preview-generic {
+  padding: 20px;
+  background: #f9f9f9;
+  color: #666;
+  border-radius: 6px;
+  margin: 10px 20px;
+}
+
+.preview-empty-state {
+  text-align: center;
+  padding: 120px 20px;
+  color: #999;
+}
+
+.preview-empty-state h3 {
+  margin-bottom: 15px;
+  color: #666;
+  font-size: 1.5rem;
+}
+
+.preview-empty-state p {
+  font-size: 1.1rem;
+}
+
+.blocks-container::-webkit-scrollbar {
   width: 8px;
 }
 
-.blocks-container::-webkit-scrollbar-track,
-.right-panel-content::-webkit-scrollbar-track {
+.blocks-container::-webkit-scrollbar-track {
   background: var(--bg-tertiary);
 }
 
-.blocks-container::-webkit-scrollbar-thumb,
-.right-panel-content::-webkit-scrollbar-thumb {
+.blocks-container::-webkit-scrollbar-thumb {
   background: var(--accent-color);
   border-radius: 4px;
 }
 
-.blocks-container::-webkit-scrollbar-thumb:hover,
-.right-panel-content::-webkit-scrollbar-thumb:hover {
+.blocks-container::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
 }
 
-/* Заголовок блока */
-.block-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.block-type {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.block-type-icon {
-  opacity: 0.7;
-}
-
-.block-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-/* Drag handle */
-.drag-handle {
-  cursor: grab;
-  color: var(--text-tertiary);
-  padding: 4px;
-  border-radius: 3px;
-  transition: all 0.2s;
-  opacity: 0;
-}
-
-.block-wrapper:hover .drag-handle {
-  opacity: 1;
-}
-
-.drag-handle:hover {
-  background: var(--hover-color);
-  color: var(--text-primary);
-}
-
-.drag-handle:active {
-  cursor: grabbing;
-}
-
-/* Move buttons */
-.move-buttons {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  z-index: 2;
-}
-
-.move-btn {
-  width: 24px;
-  height: 24px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 3px;
-  color: var(--text-primary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.move-btn:hover:not(:disabled) {
-  background: var(--accent-color);
-  color: white;
-  border-color: var(--accent-color);
-}
-
-.move-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-/* Image placeholder */
-.image-placeholder {
-  padding: 3rem;
-  background: var(--bg-secondary);
-  border: 2px dashed var(--border-color);
-  border-radius: 8px;
-  color: var(--text-tertiary);
-  text-align: center;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.image-placeholder p {
-  margin: 0;
-  font-weight: 500;
-}
-
-.image-hint {
-  font-size: 0.8rem;
-  opacity: 0.7;
-  margin-top: 0.5rem;
-}
-
-/* Empty state */
-.empty-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.5;
-  letter-spacing: 1px;
-  font-size: 0.9rem;
-  color: var(--text-tertiary);
-  gap: 1rem;
-  padding: 4rem 2rem;
-  text-align: center;
-}
-
-.empty-icon {
-  opacity: 0.5;
-  margin-bottom: 1rem;
-}
-
-/* No selection state */
-.no-selection {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-tertiary);
-  color: var(--text-tertiary);
-  font-size: 0.9rem;
-  letter-spacing: 1px;
-  padding: 2rem;
-  text-align: center;
-  gap: 1rem;
-}
-
-/* Delete button */
-.delete-btn {
-  width: 24px;
-  height: 24px;
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  opacity: 0;
-}
-
-.block-wrapper:hover .delete-btn {
-  opacity: 1;
-}
-
-.delete-btn:hover {
-  background: #c82333;
-  transform: scale(1.1);
-}
-
-/* Адаптивность */
 @media (max-width: 768px) {
   .nav {
     padding: 1rem;
@@ -1287,6 +1137,52 @@ export default {
   .auth-btn {
     padding: 6px 12px;
     font-size: 0.8rem;
+  }
+
+  .editor-layout {
+    flex-direction: column;
+  }
+
+  .left-panel {
+    width: 100%;
+    height: 200px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .right-panel {
+    width: 100%;
+    height: 300px;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .canvas-header {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .canvas-stats {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .preview-header-inner {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .preview-hero h1 {
+    font-size: 2rem;
+  }
+
+  .preview-heading h2 {
+    font-size: 1.8rem;
   }
 }
 </style>

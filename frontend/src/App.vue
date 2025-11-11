@@ -1,20 +1,23 @@
 <template>
-  <div id="app" :class="currentTheme">
+  <div id="app" :class="currentTheme" :style="pageStyles">
     <div class="global-ripple" :class="{ active: isRippling }" :style="rippleStyle"></div>
     <router-view />
   </div>
 </template>
 
 <script>
-import { ref, computed, provide } from 'vue'
+import { ref, computed, provide, watch } from 'vue'
 import { useThemeStore } from './stores/theme'
+import { useEditorStore } from './stores/editor'
 import { storeToRefs } from 'pinia'
 
 export default {
   name: 'App',
   setup() {
     const themeStore = useThemeStore()
+    const editorStore = useEditorStore()
     const { currentTheme } = storeToRefs(themeStore)
+    const { pageSettings } = storeToRefs(editorStore)
     const isRippling = ref(false)
     const rippleOrigin = ref({ x: 0, y: 0 })
 
@@ -23,6 +26,24 @@ export default {
         '--ripple-x': `${rippleOrigin.value.x}px`,
         '--ripple-y': `${rippleOrigin.value.y}px`
       }
+    })
+
+    const pageStyles = computed(() => {
+      const styles = {
+        backgroundColor: pageSettings.value.backgroundColor || 'var(--bg-primary)',
+        minHeight: '100vh',
+        transition: 'all 0.3s ease'
+      }
+
+      if (pageSettings.value.backgroundImage && pageSettings.value.backgroundImage !== '') {
+        styles.backgroundImage = `url(${pageSettings.value.backgroundImage})`
+        styles.backgroundSize = pageSettings.value.backgroundSize || 'cover'
+        styles.backgroundPosition = pageSettings.value.backgroundPosition || 'center'
+        styles.backgroundRepeat = 'no-repeat'
+        styles.backgroundAttachment = 'fixed'
+      }
+
+      return styles
     })
 
     const startRipple = (event) => {
@@ -46,7 +67,8 @@ export default {
     return {
       currentTheme,
       isRippling,
-      rippleStyle
+      rippleStyle,
+      pageStyles
     }
   }
 }
