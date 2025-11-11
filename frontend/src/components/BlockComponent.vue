@@ -399,13 +399,22 @@ const handleDragLeave = (event) => {
 
 const handleDrop = (event) => {
   event.preventDefault();
+  event.stopPropagation(); // ВАЖНО: останавливаем всплытие
+  
   isDragOver.value = false;
   dragCounter.value = 0;
   
   try {
     const dragData = JSON.parse(event.dataTransfer.getData('application/json'));
+    console.log('Drop received:', dragData);
     
     if (dragData.type === 'block-move') {
+      // Нельзя перемещать блок в самого себя
+      if (dragData.blockId === props.block.id) {
+        console.log('Cannot drop block into itself');
+        return;
+      }
+      
       // Перемещаем блок
       const success = moveBlockTo(
         dragData.blockId,
@@ -415,9 +424,13 @@ const handleDrop = (event) => {
       
       if (success) {
         setActiveBlock(dragData.blockId);
+        console.log('Block moved successfully');
+      } else {
+        console.error('Failed to move block');
       }
     } else if (dragData.type === 'block-library') {
       // Добавляем новый блок из библиотеки
+      console.log('Adding new block to:', props.block.id);
       editorStore.addBlock(dragData.blockType, props.block.id);
     }
   } catch (error) {
@@ -435,6 +448,7 @@ const handleDrop = (event) => {
   transition: all 0.2s ease;
   cursor: pointer;
   background: var(--bg-secondary);
+  min-height: 60px;
 }
 
 .block-wrapper:hover {
@@ -635,6 +649,7 @@ const handleDrop = (event) => {
 .column {
   flex: 1;
   background: transparent;
+  min-height: 150px;
 }
 
 .empty-columns {

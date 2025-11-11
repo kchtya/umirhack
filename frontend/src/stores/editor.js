@@ -94,6 +94,8 @@ export const useEditorStore = defineStore('editor', () => {
       children: canHaveChildren(blockType) ? [] : undefined
     };
 
+    console.log('Adding block:', { blockType, parentId, position, newBlock });
+
     if (parentId && parentId !== 'root') {
       const parentBlock = findBlockById(blocks.value, parentId);
       if (parentBlock && parentBlock.children) {
@@ -102,6 +104,7 @@ export const useEditorStore = defineStore('editor', () => {
         } else {
           parentBlock.children.push(newBlock);
         }
+        console.log('Added to parent:', parentBlock.name, 'children:', parentBlock.children.length);
       }
     } else {
       // Добавляем в корень (между структурными блоками)
@@ -122,12 +125,24 @@ export const useEditorStore = defineStore('editor', () => {
     }
     
     setActiveBlock(newBlock.id);
+    return newBlock;
   };
 
   // НОВЫЙ МЕТОД: Перемещение блока
   const moveBlockTo = (blockId, targetParentId, targetPosition) => {
+    console.log('Moving block:', { blockId, targetParentId, targetPosition });
+    
     const blockToMove = findBlockById(blocks.value, blockId);
-    if (!blockToMove) return false;
+    if (!blockToMove) {
+      console.error('Block not found:', blockId);
+      return false;
+    }
+
+    // Нельзя перемещать блок в самого себя
+    if (blockId === targetParentId) {
+      console.error('Cannot move block into itself');
+      return false;
+    }
 
     // Удаляем блок из текущего положения
     const removeFromParent = (blocksList, blockId) => {
@@ -147,26 +162,44 @@ export const useEditorStore = defineStore('editor', () => {
       return false;
     };
 
+    // Сохраняем старые данные перед удалением
+    const oldParent = findParentBlock(blocks.value, blockId);
+    
     // Удаляем блок
-    removeFromParent(blocks.value, blockId);
+    const removed = removeFromParent(blocks.value, blockId);
+    if (!removed) {
+      console.error('Failed to remove block from old position');
+      return false;
+    }
 
     // Добавляем в новое положение
     if (targetParentId && targetParentId !== 'root') {
       const targetParent = findBlockById(blocks.value, targetParentId);
       if (targetParent && targetParent.children) {
-        if (targetPosition !== null && targetPosition >= 0 && targetPosition <= targetParent.children.length) {
-          targetParent.children.splice(targetPosition, 0, blockToMove);
+        const finalPosition = targetPosition !== null && targetPosition >= 0 && targetPosition <= targetParent.children.length 
+          ? targetPosition 
+          : targetParent.children.length;
+        
+        targetParent.children.splice(finalPosition, 0, blockToMove);
+        console.log('Moved to parent:', targetParent.name, 'at position:', finalPosition);
+      } else {
+        console.error('Target parent not found or cannot have children');
+        // Восстанавливаем блок на старое место
+        if (oldParent && oldParent.children) {
+          oldParent.children.push(blockToMove);
         } else {
-          targetParent.children.push(blockToMove);
+          blocks.value.push(blockToMove);
         }
+        return false;
       }
     } else {
       // Добавляем в корень
-      if (targetPosition !== null && targetPosition >= 0 && targetPosition <= blocks.value.length) {
-        blocks.value.splice(targetPosition, 0, blockToMove);
-      } else {
-        blocks.value.push(blockToMove);
-      }
+      const finalPosition = targetPosition !== null && targetPosition >= 0 && targetPosition <= blocks.value.length 
+        ? targetPosition 
+        : blocks.value.length;
+      
+      blocks.value.splice(finalPosition, 0, blockToMove);
+      console.log('Moved to root at position:', finalPosition);
     }
 
     return true;
@@ -293,7 +326,7 @@ export const useEditorStore = defineStore('editor', () => {
   };
 
   const canHaveChildren = (blockType) => {
-    const containerTypes = ['container', 'section', 'hero', 'header', 'footer', 'columns'];
+    const containerTypes = ['container', 'section', 'hero', 'header', 'footer', 'columns', 'column'];
     return containerTypes.includes(blockType);
   };
 
@@ -416,12 +449,14 @@ export const useEditorStore = defineStore('editor', () => {
       'columns': {
         display: 'flex',
         gap: '20px',
-        padding: '20px'
+        padding: '20px',
+        minHeight: '200px'
       },
       'column': {
         flex: '1',
         padding: '20px',
-        backgroundColor: 'transparent'
+        backgroundColor: 'transparent',
+        minHeight: '150px'
       }
     };
 
