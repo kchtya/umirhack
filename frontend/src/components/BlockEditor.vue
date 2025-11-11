@@ -13,23 +13,28 @@
         v-if="isTextBlock" 
         v-model="localContent" 
         @input="updateContent"
+        @blur="updateContent"
         rows="4"
         placeholder="Введите текст..."
-        style="white-space: pre-wrap;"
+        class="content-input"
       />
       <input 
         v-else-if="activeBlock.type === 'image'"
         v-model="localContent"
         @input="updateContent"
+        @blur="updateContent"
         type="text"
         placeholder="URL изображения"
+        class="content-input"
       />
       <input 
         v-else
         v-model="localContent"
         @input="updateContent"
+        @blur="updateContent"
         type="text"
         placeholder="Введите содержимое..."
+        class="content-input"
       />
     </div>
 
@@ -52,19 +57,24 @@ const { updateBlockContent, deleteBlock } = editorStore;
 
 const localContent = ref('');
 
+// Следим за изменением активного блока
 watch(activeBlock, (newBlock) => {
   if (newBlock) {
-    localContent.value = newBlock.content;
+    localContent.value = newBlock.content || '';
+    console.log('BlockEditor: Active block changed', newBlock);
+  } else {
+    localContent.value = '';
   }
-}, { immediate: true });
+}, { immediate: true, deep: true });
 
 const isTextBlock = computed(() => {
-  const textTypes = ['hero', 'heading', 'paragraph', 'text', 'button'];
+  const textTypes = ['hero', 'heading', 'paragraph', 'text', 'button', 'features', 'testimonials', 'contact', 'footer'];
   return textTypes.includes(activeBlock.value?.type);
 });
 
 const updateContent = () => {
-  if (activeBlock.value) {
+  if (activeBlock.value && localContent.value !== undefined) {
+    console.log('BlockEditor: Updating content', activeBlock.value.id, localContent.value);
     updateBlockContent(activeBlock.value.id, localContent.value);
   }
 };
@@ -82,7 +92,11 @@ const getBlockTypeName = (type) => {
     'paragraph': 'ПАРАГРАФ', 
     'button': 'КНОПКА',
     'image': 'ИЗОБРАЖЕНИЕ',
-    'text': 'ТЕКСТ'
+    'text': 'ТЕКСТ',
+    'features': 'ФУНКЦИИ',
+    'testimonials': 'ОТЗЫВЫ',
+    'contact': 'КОНТАКТЫ',
+    'footer': 'ФУТЕР'
   };
   return typeNames[type] || type.toUpperCase();
 };
@@ -90,15 +104,14 @@ const getBlockTypeName = (type) => {
 
 <style scoped>
 .block-editor {
-  width: 300px;
-  padding: 2rem;
+  width: 100%;
+  padding: 1.5rem;
   background: var(--bg-tertiary);
-  border-left: 1px solid var(--border-color);
-  min-height: 100vh;
+  min-height: auto;
 }
 
 .block-editor h3 {
-  margin: 0 0 2rem 0;
+  margin: 0 0 1.5rem 0;
   color: var(--text-primary);
   font-size: 0.9rem;
   font-weight: 400;
@@ -108,7 +121,7 @@ const getBlockTypeName = (type) => {
 }
 
 .editor-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .editor-section label {
@@ -122,7 +135,7 @@ const getBlockTypeName = (type) => {
 }
 
 .block-type {
-  padding: 1rem;
+  padding: 0.8rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 4px;
@@ -132,9 +145,9 @@ const getBlockTypeName = (type) => {
   letter-spacing: 1px;
 }
 
-input, textarea {
+.content-input {
   width: 100%;
-  padding: 1rem;
+  padding: 0.8rem;
   border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 0.9rem;
@@ -144,19 +157,19 @@ input, textarea {
   font-family: inherit;
 }
 
-input:focus, textarea:focus {
+.content-input:focus {
   outline: none;
   border-color: var(--accent-color);
   box-shadow: 0 0 0 2px rgba(59, 31, 161, 0.2);
 }
 
 .editor-actions {
-  margin-top: 2rem;
+  margin-top: 1.5rem;
 }
 
 .btn-danger {
   width: 100%;
-  padding: 1rem;
+  padding: 0.8rem;
   background: #dc3545;
   color: white;
   border: none;
