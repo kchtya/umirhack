@@ -69,7 +69,6 @@
 </template>
 
 <script setup>
-import { useEditorStore } from '../stores/editor';
 import { 
   Heading, 
   Pilcrow, 
@@ -85,8 +84,6 @@ import {
   Columns,
   PanelTop
 } from 'lucide-vue-next';
-
-const editorStore = useEditorStore();
 
 const structureBlocks = [
   { type: 'container', name: 'Контейнер', icon: Container },
@@ -115,7 +112,10 @@ const allBlocks = [...structureBlocks, ...basicBlocks, ...mediaBlocks];
 
 const onDragStart = (blockType, event) => {
   console.log('Drag start:', blockType);
-  event.dataTransfer.setData('application/json', JSON.stringify(blockType));
+  event.dataTransfer.setData('application/json', JSON.stringify({
+    type: 'block-library',
+    blockType: blockType.type
+  }));
   event.dataTransfer.effectAllowed = 'copy';
 };
 </script>
@@ -161,6 +161,7 @@ const onDragStart = (blockType, event) => {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  background: var(--bg-secondary);
 }
 
 .library-sections {
@@ -241,6 +242,7 @@ const onDragStart = (blockType, event) => {
   border-radius: 6px;
   border: 1px solid var(--border-color);
   flex-shrink: 0;
+  color: var(--text-primary);
 }
 
 .block-name {

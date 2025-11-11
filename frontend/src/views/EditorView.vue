@@ -1,5 +1,5 @@
 <template>
-  <div class="editor-view" :class="themeClass" :style="pageStyles">
+  <div class="editor-view" :class="themeClass">
     <header class="header" v-if="!fullscreenPreview">
       <nav class="nav">
         <div class="logo-section">
@@ -12,7 +12,7 @@
           <div class="nav-menu">
             <span class="nav-item current-page">Конструктор</span>
             <span @click="goToTemplates" class="nav-item">Шаблоны</span>
-            <span @click="handleExport" class="nav-item">Экспорт</span>
+            <span @click="goToHome" class="nav-item">Главная</span>
           </div>
         </div>
         
@@ -23,7 +23,7 @@
               <button class="auth-btn register-btn" @click="goToRegister">Регистрация</button>
             </div>
           </div>
-          <button class="theme-toggle" @click="toggleThemeWithRipple">
+          <button class="theme-toggle" @click="toggleTheme">
             <span class="theme-icon">{{ isDark ? '☀️' : '🌙' }}</span>
           </button>
         </div>
@@ -40,7 +40,7 @@
         <!-- Центральная область: Холст -->
         <div 
           class="center-panel"
-          @drop="handleDrop"
+          @drop="handleDropFromLibrary"
           @dragover="handleDragOver"
           @dragenter="handleDragEnter"
           @dragleave="handleDragLeave"
@@ -79,10 +79,11 @@
             <!-- Блоки на холсте -->
             <div class="blocks-container">
               <BlockComponent 
-                v-for="block in blocks" 
+                v-for="(block, index) in blocks" 
                 :key="block.id"
                 :block="block"
                 :level="0"
+                :index="index"
                 @block-click="setActiveBlock"
                 @block-delete="deleteBlock"
                 @block-duplicate="duplicateBlock"
@@ -265,23 +266,6 @@ export default {
     const fullscreenPreview = ref(false);
     const isDragOver = ref(false);
 
-    const pageStyles = computed(() => {
-      const styles = {
-        backgroundColor: pageSettings.value.backgroundColor || 'var(--bg-primary)',
-        minHeight: '100vh',
-        transition: 'all 0.3s ease'
-      }
-
-      if (pageSettings.value.backgroundImage && pageSettings.value.backgroundImage !== '') {
-        styles.backgroundImage = `url(${pageSettings.value.backgroundImage})`
-        styles.backgroundSize = pageSettings.value.backgroundSize || 'cover'
-        styles.backgroundPosition = pageSettings.value.backgroundPosition || 'center'
-        styles.backgroundRepeat = 'no-repeat'
-      }
-
-      return styles
-    });
-
     const previewStyles = computed(() => {
       const styles = {
         backgroundColor: pageSettings.value.backgroundColor || '#ffffff',
@@ -303,10 +287,6 @@ export default {
       event.dataTransfer.dropEffect = 'copy';
     };
 
-    const goToTemplates = () => {
-      router.push('/templates')
-    }
-
     const handleDragEnter = (event) => {
       event.preventDefault();
       isDragOver.value = true;
@@ -319,14 +299,17 @@ export default {
       }
     };
 
-    const handleDrop = (event) => {
+    const handleDropFromLibrary = (event) => {
       event.preventDefault();
       isDragOver.value = false;
       
       try {
         const blockData = JSON.parse(event.dataTransfer.getData('application/json'));
-        console.log('Dropped block:', blockData);
-        addBlock(blockData.type);
+        console.log('Dropped block from library:', blockData);
+        
+        if (blockData.type === 'block-library') {
+          addBlock(blockData.blockType);
+        }
       } catch (error) {
         console.error('Ошибка при добавлении блока:', error);
       }
@@ -352,7 +335,7 @@ export default {
       link.click();
     };
 
-    const toggleThemeWithRipple = (event) => {
+    const toggleTheme = () => {
       themeStore.toggleTheme();
     };
 
@@ -362,6 +345,10 @@ export default {
 
     const goToHome = () => {
       router.push('/');
+    };
+
+    const goToTemplates = () => {
+      router.push('/templates');
     };
 
     const goToLogin = () => {
@@ -403,9 +390,8 @@ export default {
       themeClass,
       fullscreenPreview,
       isDragOver,
-      pageStyles,
       previewStyles,
-      handleDrop,
+      handleDropFromLibrary,
       handleDragOver,
       handleDragEnter,
       handleDragLeave,
@@ -416,7 +402,7 @@ export default {
       duplicateBlock,
       initializeStructuralBlocks,
       clearAllBlocks,
-      toggleThemeWithRipple,
+      toggleTheme,
       toggleFullscreenPreview,
       goToHome,
       goToTemplates,
@@ -455,6 +441,8 @@ export default {
   padding: 1.5rem 3rem;
   position: relative;
   flex-shrink: 0;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .logo-section {
@@ -629,6 +617,7 @@ export default {
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border-color);
+  background: var(--bg-secondary);
 }
 
 .center-panel {
@@ -660,6 +649,7 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--bg-primary);
 }
 
 .canvas-header {
@@ -668,7 +658,7 @@ export default {
   align-items: center;
   padding: 1.5rem 2rem;
   border-bottom: 1px solid var(--border-color);
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
   z-index: 10;
   flex-shrink: 0;
 }
@@ -744,8 +734,8 @@ export default {
 .blocks-container {
   flex: 1;
   overflow-y: auto;
-  padding: 0;
-  background: transparent;
+  padding: 20px;
+  background: var(--bg-primary);
 }
 
 .right-panel {
@@ -755,6 +745,7 @@ export default {
   flex-direction: column;
   overflow: hidden;
   border-left: 1px solid var(--border-color);
+  background: var(--bg-secondary);
 }
 
 .right-panel-content {
@@ -782,12 +773,14 @@ export default {
 .empty-icon {
   opacity: 0.5;
   margin-bottom: 1rem;
+  color: var(--text-tertiary);
 }
 
 .empty-hint {
   font-size: 0.8rem;
   opacity: 0.7;
   margin-top: 0.5rem;
+  color: var(--text-tertiary);
 }
 
 .btn-primary {
@@ -857,6 +850,7 @@ export default {
 .preview-content {
   flex: 1;
   overflow-y: auto;
+  background: white;
 }
 
 /* Preview block styles */

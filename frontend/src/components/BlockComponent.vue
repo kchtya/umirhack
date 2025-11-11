@@ -5,10 +5,19 @@
       active: isActive,
       'is-structural': block.isStructural,
       'has-children': hasChildren,
+      'drag-over': isDragOver,
+      'can-accept-drop': canAcceptDrop,
       [`type-${block.type}`]: true
     }"
     :style="blockStyles"
     @click.stop="handleClick"
+    @drop="handleDrop"
+    @dragover="handleDragOver"
+    @dragenter="handleDragEnter"
+    @dragleave="handleDragLeave"
+    draggable="true"
+    @dragstart="handleDragStart"
+    @dragend="handleDragEnd"
   >
     <!-- Содержимое блока -->
     <div class="block-content">
@@ -24,12 +33,17 @@
         </div>
         <div v-if="hasChildren" class="header-children">
           <BlockComponent 
-            v-for="child in block.children" 
+            v-for="(child, index) in block.children" 
             :key="child.id"
             :block="child"
             :level="level + 1"
+            :parent-id="block.id"
+            :index="index"
             @block-click="$emit('block-click', $event)"
           />
+        </div>
+        <div v-else class="drop-zone-empty" :class="{ 'drag-over': isDragOver && canAcceptDrop }">
+          Перетащите блоки сюда
         </div>
       </div>
       
@@ -39,12 +53,17 @@
         <p>Описание hero секции</p>
         <div v-if="hasChildren" class="hero-children">
           <BlockComponent 
-            v-for="child in block.children" 
+            v-for="(child, index) in block.children" 
             :key="child.id"
             :block="child"
             :level="level + 1"
+            :parent-id="block.id"
+            :index="index"
             @block-click="$emit('block-click', $event)"
           />
+        </div>
+        <div v-else class="drop-zone-empty" :class="{ 'drag-over': isDragOver && canAcceptDrop }">
+          Перетащите блоки сюда
         </div>
       </div>
       
@@ -84,16 +103,18 @@
       <!-- Container блок -->
       <div v-else-if="block.type === 'container'" class="container-content">
         <div class="container-inner">
-          <div v-if="!hasChildren" class="empty-container">
+          <div v-if="!hasChildren" class="empty-container drop-zone-empty" :class="{ 'drag-over': isDragOver && canAcceptDrop }">
             <span>📦 Контейнер</span>
             <small>Перетащите сюда блоки</small>
           </div>
           <BlockComponent 
             v-else
-            v-for="child in block.children" 
+            v-for="(child, index) in block.children" 
             :key="child.id"
             :block="child"
             :level="level + 1"
+            :parent-id="block.id"
+            :index="index"
             @block-click="$emit('block-click', $event)"
           />
         </div>
@@ -102,16 +123,18 @@
       <!-- Section блок -->
       <div v-else-if="block.type === 'section'" class="section-content">
         <div class="section-inner">
-          <div v-if="!hasChildren" class="empty-section">
+          <div v-if="!hasChildren" class="empty-section drop-zone-empty" :class="{ 'drag-over': isDragOver && canAcceptDrop }">
             <span>📄 Секция</span>
             <small>Перетащите сюда блоки</small>
           </div>
           <BlockComponent 
             v-else
-            v-for="child in block.children" 
+            v-for="(child, index) in block.children" 
             :key="child.id"
             :block="child"
             :level="level + 1"
+            :parent-id="block.id"
+            :index="index"
             @block-click="$emit('block-click', $event)"
           />
         </div>
@@ -120,16 +143,18 @@
       <!-- Body блок -->
       <div v-else-if="block.id === 'body'" class="body-content">
         <div class="body-inner">
-          <div v-if="!hasChildren" class="empty-body">
+          <div v-if="!hasChildren" class="empty-body drop-zone-empty" :class="{ 'drag-over': isDragOver && canAcceptDrop }">
             <span>📝 Основное содержимое</span>
             <small>Перетащите сюда блоки</small>
           </div>
           <BlockComponent 
             v-else
-            v-for="child in block.children" 
+            v-for="(child, index) in block.children" 
             :key="child.id"
             :block="child"
             :level="level + 1"
+            :parent-id="block.id"
+            :index="index"
             @block-click="$emit('block-click', $event)"
           />
         </div>
@@ -141,12 +166,17 @@
           <p>{{ block.content || '© 2024 Мой сайт. Все права защищены.' }}</p>
           <div v-if="hasChildren" class="footer-children">
             <BlockComponent 
-              v-for="child in block.children" 
+              v-for="(child, index) in block.children" 
               :key="child.id"
               :block="child"
               :level="level + 1"
+              :parent-id="block.id"
+              :index="index"
               @block-click="$emit('block-click', $event)"
             />
+          </div>
+          <div v-else class="drop-zone-empty" :class="{ 'drag-over': isDragOver && canAcceptDrop }">
+            Перетащите блоки сюда
           </div>
         </div>
       </div>
@@ -154,17 +184,20 @@
       <!-- Columns блок -->
       <div v-else-if="block.type === 'columns'" class="columns-content">
         <div class="columns-inner">
-          <div v-for="child in block.children" 
+          <div 
+            v-for="(child, index) in block.children" 
             :key="child.id"
             class="column"
           >
             <BlockComponent 
               :block="child"
               :level="level + 1"
+              :parent-id="block.id"
+              :index="index"
               @block-click="$emit('block-click', $event)"
             />
           </div>
-          <div v-if="!hasChildren" class="empty-columns">
+          <div v-if="!hasChildren" class="empty-columns drop-zone-empty" :class="{ 'drag-over': isDragOver && canAcceptDrop }">
             <span>📊 Колонки</span>
             <small>Добавьте колонки</small>
           </div>
@@ -173,15 +206,18 @@
 
       <!-- Column блок -->
       <div v-else-if="block.type === 'column'" class="column-content">
-        <div v-if="!hasChildren" class="empty-column">
+        <div v-if="!hasChildren" class="empty-column drop-zone-empty" :class="{ 'drag-over': isDragOver && canAcceptDrop }">
           <span>📋 Колонка</span>
+          <small>Перетащите блоки сюда</small>
         </div>
         <BlockComponent 
           v-else
-          v-for="child in block.children" 
+          v-for="(child, index) in block.children" 
           :key="child.id"
           :block="child"
           :level="level + 1"
+          :parent-id="block.id"
+          :index="index"
           @block-click="$emit('block-click', $event)"
         />
       </div>
@@ -225,13 +261,18 @@
         </div>
       </div>
     </div>
+
+    <!-- Индикатор позиции перетаскивания -->
+    <div v-if="isDragOver && canAcceptDrop" class="drop-indicator">
+      <div class="drop-line"></div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { useEditorStore } from '../stores/editor';
 import { storeToRefs } from 'pinia';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
   block: {
@@ -241,6 +282,14 @@ const props = defineProps({
   level: {
     type: Number,
     default: 0
+  },
+  parentId: {
+    type: String,
+    default: null
+  },
+  index: {
+    type: Number,
+    default: null
   }
 });
 
@@ -248,10 +297,16 @@ const emit = defineEmits(['block-click', 'block-delete', 'block-duplicate']);
 
 const editorStore = useEditorStore();
 const { activeBlock } = storeToRefs(editorStore);
-const { moveBlock, duplicateBlock: duplicateStoreBlock, deleteBlock } = editorStore;
+const { moveBlock, duplicateBlock: duplicateStoreBlock, deleteBlock, moveBlockTo, setActiveBlock, canHaveChildren } = editorStore;
 
 const isActive = computed(() => activeBlock.value?.id === props.block.id);
 const hasChildren = computed(() => props.block.children && props.block.children.length > 0);
+const isDragOver = ref(false);
+const dragCounter = ref(0);
+
+const canAcceptDrop = computed(() => {
+  return canHaveChildren(props.block.type);
+});
 
 const blockStyles = computed(() => {
   const styles = { ...props.block.styles };
@@ -294,6 +349,81 @@ const handleMoveDown = () => {
 const handleImageError = (event) => {
   event.target.style.display = 'none';
 };
+
+// НОВЫЕ МЕТОДЫ ДЛЯ ПЕРЕТАСКИВАНИЯ
+const handleDragStart = (event) => {
+  event.dataTransfer.setData('application/json', JSON.stringify({
+    type: 'block-move',
+    blockId: props.block.id,
+    parentId: props.parentId,
+    index: props.index
+  }));
+  event.dataTransfer.effectAllowed = 'move';
+  
+  // Добавляем визуальный эффект перетаскивания
+  setTimeout(() => {
+    event.target.classList.add('dragging');
+  }, 0);
+};
+
+const handleDragEnd = (event) => {
+  event.target.classList.remove('dragging');
+  isDragOver.value = false;
+  dragCounter.value = 0;
+};
+
+const handleDragOver = (event) => {
+  if (canAcceptDrop.value) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }
+};
+
+const handleDragEnter = (event) => {
+  if (canAcceptDrop.value) {
+    event.preventDefault();
+    dragCounter.value++;
+    isDragOver.value = true;
+  }
+};
+
+const handleDragLeave = (event) => {
+  if (!event.currentTarget.contains(event.relatedTarget)) {
+    dragCounter.value--;
+    if (dragCounter.value <= 0) {
+      isDragOver.value = false;
+      dragCounter.value = 0;
+    }
+  }
+};
+
+const handleDrop = (event) => {
+  event.preventDefault();
+  isDragOver.value = false;
+  dragCounter.value = 0;
+  
+  try {
+    const dragData = JSON.parse(event.dataTransfer.getData('application/json'));
+    
+    if (dragData.type === 'block-move') {
+      // Перемещаем блок
+      const success = moveBlockTo(
+        dragData.blockId,
+        props.block.id, // новый родитель
+        props.block.children ? props.block.children.length : 0 // позиция в конце
+      );
+      
+      if (success) {
+        setActiveBlock(dragData.blockId);
+      }
+    } else if (dragData.type === 'block-library') {
+      // Добавляем новый блок из библиотеки
+      editorStore.addBlock(dragData.blockType, props.block.id);
+    }
+  } catch (error) {
+    console.error('Ошибка при обработке перетаскивания:', error);
+  }
+};
 </script>
 
 <style scoped>
@@ -320,6 +450,63 @@ const handleImageError = (event) => {
   border-left: 3px solid #3b1fa1;
 }
 
+/* Стили для перетаскивания */
+.block-wrapper.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.block-wrapper.drag-over {
+  border-color: #4dabf7;
+  background: rgba(77, 171, 247, 0.05);
+}
+
+.block-wrapper.can-accept-drop.drag-over {
+  border-style: dashed;
+  border-color: #4dabf7;
+}
+
+.drop-zone-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-tertiary);
+  text-align: center;
+  border: 2px dashed var(--border-color);
+  border-radius: 6px;
+  min-height: 80px;
+  transition: all 0.2s ease;
+  margin: 10px;
+}
+
+.drop-zone-empty.drag-over {
+  border-color: #4dabf7;
+  background: rgba(77, 171, 247, 0.1);
+  color: #4dabf7;
+}
+
+.drop-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.drop-line {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  background: #4dabf7;
+  transform: translateY(-50%);
+}
+
 .block-content {
   min-height: 60px;
   padding: 15px;
@@ -327,8 +514,8 @@ const handleImageError = (event) => {
 
 /* Header */
 .header-content {
-  background: #ffffff;
-  border-bottom: 1px solid #e0e0e0;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .header-inner {
@@ -342,7 +529,7 @@ const handleImageError = (event) => {
 .logo {
   font-weight: bold;
   font-size: 1.2rem;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .nav {
@@ -351,7 +538,7 @@ const handleImageError = (event) => {
 }
 
 .nav span {
-  color: #666;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: color 0.2s;
 }
@@ -465,6 +652,7 @@ const handleImageError = (event) => {
 
 .empty-column {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 2rem;
@@ -479,11 +667,13 @@ const handleImageError = (event) => {
   margin: 0;
   font-size: 2rem;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .paragraph-content p {
   margin: 0;
   line-height: 1.6;
+  color: var(--text-secondary);
 }
 
 .button-content {
@@ -529,6 +719,7 @@ const handleImageError = (event) => {
 .text-content p {
   margin: 0;
   line-height: 1.6;
+  color: var(--text-primary);
 }
 
 .generic-content {

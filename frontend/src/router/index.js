@@ -4,7 +4,7 @@ import EditorView from '../views/EditorView.vue'
 import TemplatesView from '../views/TemplatesView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
-import AccountView from '../views/AccountView.vue' // ДОБАВЛЕН ИМПОРТ
+import AccountView from '../views/AccountView.vue'
 
 const routes = [
   {
@@ -32,7 +32,7 @@ const routes = [
     name: 'Register',
     component: RegisterView
   },
-  { // ДОБАВЛЕН НОВЫЙ МАРШРУТ
+  {
     path: '/account',
     name: 'Account',
     component: AccountView
@@ -40,7 +40,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
 

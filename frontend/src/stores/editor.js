@@ -83,7 +83,8 @@ export const useEditorStore = defineStore('editor', () => {
     return null;
   };
 
-  const addBlock = (blockType, parentId = null) => {
+  // НОВЫЙ МЕТОД: Добавление блока с указанием родителя и позиции
+  const addBlock = (blockType, parentId = null, position = null) => {
     const newBlock = {
       id: Date.now().toString(),
       type: blockType,
@@ -96,19 +97,79 @@ export const useEditorStore = defineStore('editor', () => {
     if (parentId && parentId !== 'root') {
       const parentBlock = findBlockById(blocks.value, parentId);
       if (parentBlock && parentBlock.children) {
-        parentBlock.children.push(newBlock);
+        if (position !== null && position >= 0 && position <= parentBlock.children.length) {
+          parentBlock.children.splice(position, 0, newBlock);
+        } else {
+          parentBlock.children.push(newBlock);
+        }
       }
     } else {
       // Добавляем в корень (между структурными блоками)
       const bodyIndex = blocks.value.findIndex(block => block.id === 'body');
       if (bodyIndex !== -1) {
-        blocks.value.splice(bodyIndex, 0, newBlock);
+        if (position !== null && position >= 0 && position <= blocks.value.length) {
+          blocks.value.splice(position, 0, newBlock);
+        } else {
+          blocks.value.splice(bodyIndex, 0, newBlock);
+        }
       } else {
-        blocks.value.push(newBlock);
+        if (position !== null && position >= 0 && position <= blocks.value.length) {
+          blocks.value.splice(position, 0, newBlock);
+        } else {
+          blocks.value.push(newBlock);
+        }
       }
     }
     
     setActiveBlock(newBlock.id);
+  };
+
+  // НОВЫЙ МЕТОД: Перемещение блока
+  const moveBlockTo = (blockId, targetParentId, targetPosition) => {
+    const blockToMove = findBlockById(blocks.value, blockId);
+    if (!blockToMove) return false;
+
+    // Удаляем блок из текущего положения
+    const removeFromParent = (blocksList, blockId) => {
+      const index = blocksList.findIndex(block => block.id === blockId);
+      if (index !== -1) {
+        blocksList.splice(index, 1);
+        return true;
+      }
+      
+      for (const block of blocksList) {
+        if (block.children && block.children.length > 0) {
+          if (removeFromParent(block.children, blockId)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    // Удаляем блок
+    removeFromParent(blocks.value, blockId);
+
+    // Добавляем в новое положение
+    if (targetParentId && targetParentId !== 'root') {
+      const targetParent = findBlockById(blocks.value, targetParentId);
+      if (targetParent && targetParent.children) {
+        if (targetPosition !== null && targetPosition >= 0 && targetPosition <= targetParent.children.length) {
+          targetParent.children.splice(targetPosition, 0, blockToMove);
+        } else {
+          targetParent.children.push(blockToMove);
+        }
+      }
+    } else {
+      // Добавляем в корень
+      if (targetPosition !== null && targetPosition >= 0 && targetPosition <= blocks.value.length) {
+        blocks.value.splice(targetPosition, 0, blockToMove);
+      } else {
+        blocks.value.push(blockToMove);
+      }
+    }
+
+    return true;
   };
 
   const setActiveBlock = (id) => {
@@ -375,6 +436,7 @@ export const useEditorStore = defineStore('editor', () => {
     pageSettings,
     initializeStructuralBlocks,
     addBlock,
+    moveBlockTo, // НОВЫЙ МЕТОД
     setActiveBlock,
     updateBlockContent,
     updateBlockStyles,
@@ -384,6 +446,8 @@ export const useEditorStore = defineStore('editor', () => {
     updatePageSettings,
     loadProject,
     clearAllBlocks,
-    getDefaultContent
+    getDefaultContent,
+    findParentBlock,
+    canHaveChildren
   };
 });
