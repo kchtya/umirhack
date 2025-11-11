@@ -1,7 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LandingView from '../views/LandingView.vue'
 import EditorView from '../views/EditorView.vue'
-import TemplatesView from '../views/TemplatesView.vue' // Добавляем импорт
+import TemplatesView from '../views/TemplatesView.vue'
+import LoginView from '../views/LoginView.vue'
+import RegisterView from '../views/RegisterView.vue'
+import AccountView from '../views/AccountView.vue' // ДОБАВЛЕН ИМПОРТ
 
 const routes = [
   {
@@ -15,9 +18,24 @@ const routes = [
     component: EditorView
   },
   {
-    path: '/templates', // Добавляем новый маршрут
+    path: '/templates',
     name: 'Templates',
     component: TemplatesView
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: LoginView
+  },
+  {
+    path: '/register', 
+    name: 'Register',
+    component: RegisterView
+  },
+  { // ДОБАВЛЕН НОВЫЙ МАРШРУТ
+    path: '/account',
+    name: 'Account',
+    component: AccountView
   }
 ]
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="editor-view">
+  <div class="editor-view" :class="themeClass">
     <header class="header">
       <nav class="nav">
         <div class="logo-section">
@@ -10,13 +10,29 @@
         
         <div class="nav-center">
           <div class="nav-menu">
-            <span class="nav-item">Конструктор</span>
+            <span class="nav-item current-page">Конструктор</span>
             <span @click="goToTemplates" class="nav-item">Шаблоны</span>
             <span @click="handleExport" class="nav-item">Экспорт</span>
           </div>
         </div>
         
+        <!-- ОБНОВЛЕНО: Правильные кнопки авторизации -->
         <div class="nav-right">
+          <div class="auth-buttons">
+            <!-- Показываем кнопки входа/регистрации -->
+            <div class="guest-buttons">
+              <button class="auth-btn login-btn" @click="goToLogin">Войти</button>
+              <button class="auth-btn register-btn" @click="goToRegister">Регистрация</button>
+            </div>
+            
+            <!-- Закомментировано - будет показываться когда пользователь авторизован -->
+            <!--
+            <div class="user-buttons">
+              <button class="auth-btn account-btn" @click="goToAccount">Аккаунт</button>
+              <button class="auth-btn logout-btn" @click="handleLogout">Выйти</button>
+            </div>
+            -->
+          </div>
           <button class="theme-toggle" @click="toggleThemeWithRipple">
             <span class="theme-icon">{{ isDark ? '☀️' : '🌙' }}</span>
           </button>
@@ -24,174 +40,180 @@
       </nav>
     </header>
     
-    <div class="editor-layout">
-      <!-- Левая панель: Библиотека блоков -->
-      <div class="left-panel">
-        <BlockLibrary />
-      </div>
-      
-      <!-- Центральная область: Холст -->
-      <div 
-        class="center-panel"
-        @drop="handleDrop"
-        @dragover="handleDragOver"
-        @dragenter="handleDragEnter"
-        @dragleave="handleDragLeave"
-        @click="clearSelection"
-        :class="{ 'drag-over': isDragOver }"
-      >
-        <div class="canvas">
-          <div class="canvas-header">
-            <h3>РАБОЧАЯ ОБЛАСТЬ</h3>
-            <div class="canvas-stats">
-              <div class="stat">
-                <span class="stat-number">{{ blocksCount }}</span>
-                <span class="stat-label">БЛОКОВ</span>
+    <!-- ОБНОВЛЕНО: Основной контент в main -->
+    <main class="main-content">
+      <div class="editor-layout">
+        <!-- Левая панель: Библиотека блоков -->
+        <div class="left-panel">
+          <BlockLibrary />
+        </div>
+        
+        <!-- Центральная область: Холст -->
+        <div 
+          class="center-panel"
+          @drop="handleDrop"
+          @dragover="handleDragOver"
+          @dragenter="handleDragEnter"
+          @dragleave="handleDragLeave"
+          @click="clearSelection"
+          :class="{ 'drag-over': isDragOver }"
+        >
+          <div class="canvas">
+            <div class="canvas-header">
+              <h3>РАБОЧАЯ ОБЛАСТЬ</h3>
+              <div class="canvas-stats">
+                <div class="stat">
+                  <span class="stat-number">{{ blocksCount }}</span>
+                  <span class="stat-label">БЛОКОВ</span>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <!-- Пустое состояние -->
-          <div v-if="blocksCount === 0" class="empty-state">
-            <div class="empty-icon">
-              <Download :size="48" />
+            
+            <!-- Пустое состояние -->
+            <div v-if="blocksCount === 0" class="empty-state">
+              <div class="empty-icon">
+                <Download :size="48" />
+              </div>
+              <p>ПЕРЕТАЩИТЕ БЛОКИ ДЛЯ НАЧАЛА РАБОТЫ</p>
             </div>
-            <p>ПЕРЕТАЩИТЕ БЛОКИ ДЛЯ НАЧАЛА РАБОТЫ</p>
-          </div>
-          
-          <!-- Блоки на холсте -->
-          <div class="blocks-container">
-            <div 
-              v-for="(block, index) in blocks" 
-              :key="block.id"
-              class="block-wrapper"
-              :class="{ active: activeBlock?.id === block.id }"
-              @click.stop="setActiveBlock(block.id)"
-              :style="getBlockStyles(block)"
-            >
-              <!-- Заголовок блока с иконкой -->
-              <div class="block-header">
-                <div class="block-type">
-                  <component :is="getBlockIcon(block.type)" :size="16" class="block-type-icon" />
-                  <span class="block-type-label">{{ getBlockLabel(block.type) }}</span>
-                </div>
-                <div class="block-actions">
-                  <!-- Drag handle -->
-                  <div class="drag-handle" title="Перетащить блок" @mousedown="startDrag(block.id, $event)">
-                    <GripVertical :size="16" />
+            
+            <!-- Блоки на холсте -->
+            <div class="blocks-container">
+              <div 
+                v-for="(block, index) in blocks" 
+                :key="block.id"
+                class="block-wrapper"
+                :class="{ active: activeBlock?.id === block.id }"
+                @click.stop="setActiveBlock(block.id)"
+                :style="getBlockStyles(block)"
+              >
+                <!-- Заголовок блока с иконкой -->
+                <div class="block-header">
+                  <div class="block-type">
+                    <component :is="getBlockIcon(block.type)" :size="16" class="block-type-icon" />
+                    <span class="block-type-label">{{ getBlockLabel(block.type) }}</span>
                   </div>
-                  
-                  <!-- Кнопка удаления -->
-                  <button 
-                    @click.stop="deleteBlock(block.id)"
-                    class="delete-btn"
-                    title="Удалить блок"
+                  <div class="block-actions">
+                    <!-- Drag handle -->
+                    <div class="drag-handle" title="Перетащить блок" @mousedown="startDrag(block.id, $event)">
+                      <GripVertical :size="16" />
+                    </div>
+                    
+                    <!-- Кнопка удаления -->
+                    <button 
+                      @click.stop="deleteBlock(block.id)"
+                      class="delete-btn"
+                      title="Удалить блок"
+                    >
+                      <X :size="16" />
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Hero блок -->
+                <div v-if="block.type === 'hero'" class="block-element hero">
+                  <h1>{{ block.content }}</h1>
+                </div>
+                
+                <!-- Heading блок -->
+                <div v-else-if="block.type === 'heading'" class="block-element heading">
+                  <h2>{{ block.content }}</h2>
+                </div>
+                
+                <!-- Paragraph блок -->
+                <div v-else-if="block.type === 'paragraph'" class="block-element paragraph">
+                  <p>{{ block.content }}</p>
+                </div>
+                
+                <!-- Button блок -->
+                <div v-else-if="block.type === 'button'" class="block-element button">
+                  <button>{{ block.content }}</button>
+                </div>
+                
+                <!-- Image блок -->
+                <div v-else-if="block.type === 'image'" class="block-element image">
+                  <img 
+                    v-if="isValidImageUrl(block.content)" 
+                    :src="block.content" 
+                    alt="Image block" 
+                    @error="handleImageError"
+                    :style="{ 
+                      width: block.styles?.width || '100%',
+                      height: block.styles?.height || 'auto',
+                      borderRadius: block.styles?.borderRadius || '8px'
+                    }"
                   >
-                    <X :size="16" />
+                  <div v-else class="image-placeholder">
+                    <Image :size="32" />
+                    <p>Введите URL изображения</p>
+                    <div class="image-hint">Например: https://images.unsplash.com/photo-1550745165-9bc0b252726f</div>
+                  </div>
+                </div>
+                
+                <!-- Text блок -->
+                <div v-else-if="block.type === 'text'" class="block-element text">
+                  <p>{{ block.content }}</p>
+                </div>
+                
+                <!-- Features блок -->
+                <div v-else-if="block.type === 'features'" class="block-element features">
+                  <h3>Функции</h3>
+                  <p>{{ block.content }}</p>
+                </div>
+                
+                <!-- Testimonials блок -->
+                <div v-else-if="block.type === 'testimonials'" class="block-element testimonials">
+                  <h3>Отзывы</h3>
+                  <p>{{ block.content }}</p>
+                </div>
+                
+                <!-- Contact блок -->
+                <div v-else-if="block.type === 'contact'" class="block-element contact">
+                  <h3>Контакты</h3>
+                  <p>{{ block.content }}</p>
+                </div>
+                
+                <!-- Footer блок -->
+                <div v-else-if="block.type === 'footer'" class="block-element footer">
+                  <p>{{ block.content }}</p>
+                </div>
+                
+                <!-- Неизвестный блок -->
+                <div v-else class="block-element unknown">
+                  {{ block.content }}
+                </div>
+
+                <!-- Кнопки перемещения -->
+                <div v-if="activeBlock?.id === block.id" class="move-buttons">
+                  <button @click.stop="moveBlockUp(index)" class="move-btn" :disabled="index === 0" title="Переместить вверх">
+                    <ChevronUp :size="14" />
+                  </button>
+                  <button @click.stop="moveBlockDown(index)" class="move-btn" :disabled="index === blocks.length - 1" title="Переместить вниз">
+                    <ChevronDown :size="14" />
                   </button>
                 </div>
               </div>
-              
-              <!-- Hero блок -->
-              <div v-if="block.type === 'hero'" class="block-element hero">
-                <h1>{{ block.content }}</h1>
-              </div>
-              
-              <!-- Heading блок -->
-              <div v-else-if="block.type === 'heading'" class="block-element heading">
-                <h2>{{ block.content }}</h2>
-              </div>
-              
-              <!-- Paragraph блок -->
-              <div v-else-if="block.type === 'paragraph'" class="block-element paragraph">
-                <p>{{ block.content }}</p>
-              </div>
-              
-              <!-- Button блок -->
-              <div v-else-if="block.type === 'button'" class="block-element button">
-                <button>{{ block.content }}</button>
-              </div>
-              
-              <!-- Image блок -->
-              <div v-else-if="block.type === 'image'" class="block-element image">
-                <img 
-                  v-if="isValidImageUrl(block.content)" 
-                  :src="block.content" 
-                  alt="Image block" 
-                  @error="handleImageError"
-                  :style="{ 
-                    width: block.styles?.width || '100%',
-                    height: block.styles?.height || 'auto',
-                    borderRadius: block.styles?.borderRadius || '8px'
-                  }"
-                >
-                <div v-else class="image-placeholder">
-                  <Image :size="32" />
-                  <p>Введите URL изображения</p>
-                  <div class="image-hint">Например: https://images.unsplash.com/photo-1550745165-9bc0b252726f</div>
-                </div>
-              </div>
-              
-              <!-- Text блок -->
-              <div v-else-if="block.type === 'text'" class="block-element text">
-                <p>{{ block.content }}</p>
-              </div>
-              
-              <!-- Features блок -->
-              <div v-else-if="block.type === 'features'" class="block-element features">
-                <h3>Функции</h3>
-                <p>{{ block.content }}</p>
-              </div>
-              
-              <!-- Testimonials блок -->
-              <div v-else-if="block.type === 'testimonials'" class="block-element testimonials">
-                <h3>Отзывы</h3>
-                <p>{{ block.content }}</p>
-              </div>
-              
-              <!-- Contact блок -->
-              <div v-else-if="block.type === 'contact'" class="block-element contact">
-                <h3>Контакты</h3>
-                <p>{{ block.content }}</p>
-              </div>
-              
-              <!-- Footer блок -->
-              <div v-else-if="block.type === 'footer'" class="block-element footer">
-                <p>{{ block.content }}</p>
-              </div>
-              
-              <!-- Неизвестный блок -->
-              <div v-else class="block-element unknown">
-                {{ block.content }}
-              </div>
-
-              <!-- Кнопки перемещения -->
-              <div v-if="activeBlock?.id === block.id" class="move-buttons">
-                <button @click.stop="moveBlockUp(index)" class="move-btn" :disabled="index === 0" title="Переместить вверх">
-                  <ChevronUp :size="14" />
-                </button>
-                <button @click.stop="moveBlockDown(index)" class="move-btn" :disabled="index === blocks.length - 1" title="Переместить вниз">
-                  <ChevronDown :size="14" />
-                </button>
-              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Правая панель: Редактор и инструменты -->
+        <div class="right-panel">
+          <div class="right-panel-content">
+            <BlockEditor v-if="activeBlock" />
+            <Toolbar v-if="activeBlock" />
+            <ProjectManager v-if="!activeBlock" />
+            <div v-if="!activeBlock && blocksCount > 0" class="no-selection">
+              <MousePointerClick :size="32" />
+              <p>Выберите блок для редактирования</p>
             </div>
           </div>
         </div>
       </div>
-      
-      <!-- Правая панель: Редактор и инструменты -->
-      <div class="right-panel">
-        <div class="right-panel-content">
-          <BlockEditor v-if="activeBlock" />
-          <Toolbar v-if="activeBlock" />
-          <ProjectManager v-if="!activeBlock" />
-          <div v-if="!activeBlock && blocksCount > 0" class="no-selection">
-            <MousePointerClick :size="32" />
-            <p>Выберите блок для редактирования</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    </main>
+
+    <!-- ДОБАВЛЕН ПОДВАЛ -->
+    <AppFooter />
   </div>
 </template>
 
@@ -200,11 +222,12 @@ import { useEditorStore } from '../stores/editor';
 import { useThemeStore } from '../stores/theme';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import BlockLibrary from '../components/BlockLibrary.vue';
 import BlockEditor from '../components/BlockEditor.vue';
 import Toolbar from '../components/Toolbar.vue';
 import ProjectManager from '../components/ProjectManager.vue';
+import AppFooter from '../components/AppFooter.vue';
 
 // Иконки Lucide
 import { 
@@ -233,6 +256,7 @@ export default {
     BlockEditor,
     Toolbar,
     ProjectManager,
+    AppFooter,
     Download,
     GripVertical,
     X,
@@ -249,6 +273,8 @@ export default {
     const { blocks, activeBlock, blocksCount } = storeToRefs(editorStore);
     const { isDark } = storeToRefs(themeStore);
     const { addBlock, setActiveBlock, deleteBlock, getDefaultContent, moveBlock } = editorStore;
+
+    const themeClass = computed(() => isDark.value ? 'theme-dark' : 'theme-light');
 
     const isDragOver = ref(false);
 
@@ -381,11 +407,31 @@ export default {
       router.push('/');
     };
 
+    const goToLogin = () => {
+      router.push('/login');
+    };
+
+    const goToRegister = () => {
+      router.push('/register');
+    };
+
+    // ОБНОВЛЕНО: Добавлены методы для аккаунта
+    const goToAccount = () => {
+      router.push('/account');
+    };
+
+    const handleLogout = () => {
+      console.log('Logout');
+      // Здесь будет логика выхода когда появится бэкенд
+      router.push('/');
+    };
+
     return {
       blocks,
       activeBlock,
       blocksCount,
       isDark,
+      themeClass,
       isDragOver,
       handleDrop,
       handleDragOver,
@@ -406,19 +452,31 @@ export default {
       startDrag,
       toggleThemeWithRipple,
       goToHome,
-      goToTemplates
+      goToTemplates,
+      goToLogin,
+      goToRegister,
+      goToAccount,
+      handleLogout
     };
   }
 }
 </script>
 
 <style scoped>
+/* ОБНОВЛЕНО: Flexbox layout для прижатия подвала к низу */
 .editor-view {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
   transition: all 0.3s ease;
+}
+
+/* ОБНОВЛЕНО: Основной контент занимает все доступное пространство */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
@@ -501,11 +559,75 @@ export default {
   transform: translateY(-1px);
 }
 
+/* ОБНОВЛЕНО: Стиль для текущей страницы */
+.nav-item.current-page {
+  color: var(--text-primary);
+  background: var(--accent-color);
+}
+
+/* ОБНОВЛЕНО: Правая часть с авторизацией */
 .nav-right {
   flex: 1;
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: 1rem;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.auth-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  font-family: inherit;
+  letter-spacing: 0.5px;
+}
+
+.login-btn {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.login-btn:hover {
+  background: var(--hover-color);
+  transform: translateY(-1px);
+}
+
+.register-btn {
+  background: #3b1fa1;
+  color: white;
+  border-color: #3b1fa1;
+}
+
+.register-btn:hover {
+  background: #4dabf7;
+  border-color: #4dabf7;
+  transform: translateY(-1px);
+}
+
+/* ОБНОВЛЕНО: Стили для кнопок аккаунта (пока не используются) */
+.account-btn {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.logout-btn {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.logout-btn:hover {
+  background: var(--hover-color);
 }
 
 .theme-toggle {
@@ -535,11 +657,19 @@ export default {
   position: relative;
 }
 
-/* Основной layout с прокруткой для всех панелей */
+/* ОБНОВЛЕНО: CSS переменные для инвертирования лого */
+.theme-dark {
+  --logo-invert: 1;
+}
+
+.theme-light {
+  --logo-invert: 0;
+}
+
+/* ОБНОВЛЕНО: Основной layout редактора */
 .editor-layout {
   display: flex;
   flex: 1;
-  height: calc(100vh - 120px);
   min-height: 0;
   overflow: hidden;
 }
@@ -932,14 +1062,6 @@ export default {
   margin-bottom: 1rem;
 }
 
-.theme-dark {
-  --logo-invert: 1;
-}
-
-.theme-light {
-  --logo-invert: 0;
-}
-
 /* Кастомные скроллбары */
 .blocks-container::-webkit-scrollbar,
 .right-panel-content::-webkit-scrollbar {
@@ -1137,5 +1259,34 @@ export default {
 .delete-btn:hover {
   background: #c82333;
   transform: scale(1.1);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .nav {
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .nav-center {
+    order: 3;
+    flex: 100%;
+    margin-top: 1rem;
+  }
+  
+  .nav-right {
+    flex: 1;
+    justify-content: flex-end;
+  }
+  
+  .auth-buttons {
+    gap: 0.5rem;
+  }
+  
+  .auth-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
 }
 </style>

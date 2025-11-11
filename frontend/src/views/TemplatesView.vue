@@ -1,25 +1,39 @@
 <template>
-  <div class="templates-view">
+  <div class="templates-view" :class="themeClass">
+    <!-- Навигационное меню -->
     <header class="header">
       <nav class="nav">
-        <!-- Логотип слева -->
         <div class="logo-section">
           <div class="logo-image" @click="goToHome">
             <img src="@/assets/images/logo.svg" alt="Digitalize" class="logo-svg">
           </div>
         </div>
         
-        <!-- Центральное меню -->
         <div class="nav-center">
           <div class="nav-menu">
             <span @click="goToEditor" class="nav-item">Конструктор</span>
-            <span class="nav-item active">Шаблоны</span>
+            <span class="nav-item current-page">Шаблоны</span>
             <span @click="goToExport" class="nav-item">Экспорт</span>
           </div>
         </div>
         
-        <!-- Кнопка темы справа -->
+        <!-- ОБНОВЛЕНО: Правильные кнопки авторизации -->
         <div class="nav-right">
+          <div class="auth-buttons">
+            <!-- Показываем кнопки входа/регистрации -->
+            <div class="guest-buttons">
+              <button class="auth-btn login-btn" @click="goToLogin">Войти</button>
+              <button class="auth-btn register-btn" @click="goToRegister">Регистрация</button>
+            </div>
+            
+            <!-- Закомментировано - будет показываться когда пользователь авторизован -->
+            <!--
+            <div class="user-buttons">
+              <button class="auth-btn account-btn" @click="goToAccount">Аккаунт</button>
+              <button class="auth-btn logout-btn" @click="handleLogout">Выйти</button>
+            </div>
+            -->
+          </div>
           <button 
             class="theme-toggle" 
             @click="toggleThemeWithRipple"
@@ -30,157 +44,163 @@
       </nav>
     </header>
 
-    <main class="templates-main">
-      <div class="templates-header">
-        <h1 class="templates-title">БИБЛИОТЕКА ШАБЛОНОВ</h1>
-        <p class="templates-subtitle">Готовые решения для быстрого старта</p>
-        
-        <div class="templates-filters">
-          <div class="filter-group">
-            <label>Категория:</label>
-            <select v-model="selectedCategory" class="filter-select">
-              <option value="all">Все шаблоны</option>
-              <option value="business">Бизнес</option>
-              <option value="portfolio">Портфолио</option>
-              <option value="ecommerce">Интернет-магазин</option>
-              <option value="landing">Лендинг</option>
-              <option value="blog">Блог</option>
-            </select>
-          </div>
+    <!-- ОБНОВЛЕНО: Основной контент в main -->
+    <main class="main-content">
+      <div class="templates-main">
+        <div class="templates-header">
+          <h1 class="templates-title">БИБЛИОТЕКА ШАБЛОНОВ</h1>
+          <p class="templates-subtitle">Готовые решения для быстрого старта</p>
           
-          <div class="filter-group">
-            <label>Сортировка:</label>
-            <select v-model="selectedSort" class="filter-select">
-              <option value="newest">Сначала новые</option>
-              <option value="popular">Популярные</option>
-              <option value="name">По названию</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Показываем только реальные шаблоны, без заглушек -->
-      <div class="templates-grid">
-        <div 
-          v-for="template in filteredTemplates" 
-          :key="template.id"
-          class="template-card"
-          @click="previewTemplate(template)"
-        >
-          <div class="template-preview">
-            <div class="template-placeholder">
-              <Layout :size="48" />
-              <div class="template-badge">{{ getCategoryName(template.category) }}</div>
+          <div class="templates-filters">
+            <div class="filter-group">
+              <label>Категория:</label>
+              <select v-model="selectedCategory" class="filter-select">
+                <option value="all">Все шаблоны</option>
+                <option value="business">Бизнес</option>
+                <option value="portfolio">Портфолио</option>
+                <option value="ecommerce">Интернет-магазин</option>
+                <option value="landing">Лендинг</option>
+                <option value="blog">Блог</option>
+              </select>
             </div>
             
-            <div class="template-overlay">
-              <button @click.stop="useTemplate(template)" class="use-template-btn">
-                <Check :size="20" />
-                Использовать
-              </button>
-            </div>
-          </div>
-          
-          <div class="template-info">
-            <h3 class="template-name">{{ template.name }}</h3>
-            <p class="template-description">{{ template.description }}</p>
-            
-            <div class="template-meta">
-              <div class="template-difficulty" :class="template.difficulty">
-                {{ getDifficultyName(template.difficulty) }}
-              </div>
-              <div class="template-stats">
-                <Eye :size="14" />
-                {{ template.views || 0 }}
-              </div>
-            </div>
-            
-            <div class="template-tags">
-              <span 
-                v-for="tag in template.tags" 
-                :key="tag"
-                class="template-tag"
-              >
-                {{ tag }}
-              </span>
+            <div class="filter-group">
+              <label>Сортировка:</label>
+              <select v-model="selectedSort" class="filter-select">
+                <option value="newest">Сначала новые</option>
+                <option value="popular">Популярные</option>
+                <option value="name">По названию</option>
+              </select>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Сообщение если нет шаблонов -->
-      <div v-if="filteredTemplates.length === 0" class="empty-state">
-        <div class="empty-icon">
-          <Layout :size="64" />
-        </div>
-        <h3>Шаблоны не найдены</h3>
-        <p>Попробуйте изменить параметры фильтрации</p>
-      </div>
-
-      <!-- Модальное окно предпросмотра -->
-      <div v-if="selectedTemplate" class="modal-overlay" @click="closeModal">
-        <div class="modal-content" @click.stop>
-          <button class="modal-close" @click="closeModal">
-            <X :size="24" />
-          </button>
-          
-          <div class="modal-preview">
-            <div class="modal-image">
-              <div class="modal-placeholder">
-                <Layout :size="64" />
-                <p>Превью шаблона</p>
+        <!-- Показываем только реальные шаблоны, без заглушек -->
+        <div class="templates-grid">
+          <div 
+            v-for="template in filteredTemplates" 
+            :key="template.id"
+            class="template-card"
+            @click="previewTemplate(template)"
+          >
+            <div class="template-preview">
+              <div class="template-placeholder">
+                <Layout :size="48" />
+                <div class="template-badge">{{ getCategoryName(template.category) }}</div>
               </div>
-            </div>
-            
-            <div class="modal-info">
-              <h2>{{ selectedTemplate.name }}</h2>
-              <p class="modal-description">{{ selectedTemplate.description }}</p>
               
-              <div class="modal-details">
-                <div class="detail-item">
-                  <strong>Категория:</strong>
-                  <span>{{ getCategoryName(selectedTemplate.category) }}</span>
+              <div class="template-overlay">
+                <button @click.stop="useTemplate(template)" class="use-template-btn">
+                  <Check :size="20" />
+                  Использовать
+                </button>
+              </div>
+            </div>
+            
+            <div class="template-info">
+              <h3 class="template-name">{{ template.name }}</h3>
+              <p class="template-description">{{ template.description }}</p>
+              
+              <div class="template-meta">
+                <div class="template-difficulty" :class="template.difficulty">
+                  {{ getDifficultyName(template.difficulty) }}
                 </div>
-                <div class="detail-item">
-                  <strong>Блоков:</strong>
-                  <span>{{ selectedTemplate.blocksCount || 8 }}</span>
-                </div>
-                <div class="detail-item">
-                  <strong>Сложность:</strong>
-                  <span class="difficulty" :class="selectedTemplate.difficulty">
-                    {{ getDifficultyName(selectedTemplate.difficulty) }}
-                  </span>
-                </div>
-                <div class="detail-item">
-                  <strong>Просмотры:</strong>
-                  <span>{{ selectedTemplate.views || 0 }}</span>
+                <div class="template-stats">
+                  <Eye :size="14" />
+                  {{ template.views || 0 }}
                 </div>
               </div>
               
-              <div class="template-tags modal-tags">
+              <div class="template-tags">
                 <span 
-                  v-for="tag in selectedTemplate.tags" 
+                  v-for="tag in template.tags" 
                   :key="tag"
                   class="template-tag"
                 >
                   {{ tag }}
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Сообщение если нет шаблонов -->
+        <div v-if="filteredTemplates.length === 0" class="empty-state">
+          <div class="empty-icon">
+            <Layout :size="64" />
+          </div>
+          <h3>Шаблоны не найдены</h3>
+          <p>Попробуйте изменить параметры фильтрации</p>
+        </div>
+
+        <!-- Модальное окно предпросмотра -->
+        <div v-if="selectedTemplate" class="modal-overlay" @click="closeModal">
+          <div class="modal-content" @click.stop>
+            <button class="modal-close" @click="closeModal">
+              <X :size="24" />
+            </button>
+            
+            <div class="modal-preview">
+              <div class="modal-image">
+                <div class="modal-placeholder">
+                  <Layout :size="64" />
+                  <p>Превью шаблона</p>
+                </div>
+              </div>
               
-              <div class="modal-actions">
-                <button @click="useTemplate(selectedTemplate)" class="btn-primary">
-                  <Check :size="20" />
-                  Использовать шаблон
-                </button>
-                <button @click="closeModal" class="btn-secondary">
-                  Отмена
-                </button>
+              <div class="modal-info">
+                <h2>{{ selectedTemplate.name }}</h2>
+                <p class="modal-description">{{ selectedTemplate.description }}</p>
+                
+                <div class="modal-details">
+                  <div class="detail-item">
+                    <strong>Категория:</strong>
+                    <span>{{ getCategoryName(selectedTemplate.category) }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <strong>Блоков:</strong>
+                    <span>{{ selectedTemplate.blocksCount || 8 }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <strong>Сложность:</strong>
+                    <span class="difficulty" :class="selectedTemplate.difficulty">
+                      {{ getDifficultyName(selectedTemplate.difficulty) }}
+                    </span>
+                  </div>
+                  <div class="detail-item">
+                    <strong>Просмотры:</strong>
+                    <span>{{ selectedTemplate.views || 0 }}</span>
+                  </div>
+                </div>
+                
+                <div class="template-tags modal-tags">
+                  <span 
+                    v-for="tag in selectedTemplate.tags" 
+                    :key="tag"
+                    class="template-tag"
+                  >
+                    {{ tag }}
+                  </span>
+                </div>
+                
+                <div class="modal-actions">
+                  <button @click="useTemplate(selectedTemplate)" class="btn-primary">
+                    <Check :size="20" />
+                    Использовать шаблон
+                  </button>
+                  <button @click="closeModal" class="btn-secondary">
+                    Отмена
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </main>
+
+    <!-- ДОБАВЛЕН ПОДВАЛ -->
+    <AppFooter />
   </div>
 </template>
 
@@ -189,6 +209,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useThemeStore } from '../stores/theme';
 import { storeToRefs } from 'pinia';
+import AppFooter from '../components/AppFooter.vue'; // ДОБАВЛЕН ИМПОРТ
 import { 
   Layout, 
   Check, 
@@ -199,6 +220,9 @@ import {
 const router = useRouter();
 const themeStore = useThemeStore();
 const { isDark } = storeToRefs(themeStore);
+
+// ОБНОВЛЕНО: Добавлен computed для themeClass
+const themeClass = computed(() => isDark.value ? 'theme-dark' : 'theme-light');
 
 // Состояние
 const selectedCategory = ref('all');
@@ -342,6 +366,26 @@ const goToEditor = () => {
   router.push('/editor');
 };
 
+// ОБНОВЛЕНО: Добавлены функции для навигации
+const goToLogin = () => {
+  router.push('/login');
+};
+
+const goToRegister = () => {
+  router.push('/register');
+};
+
+// ОБНОВЛЕНО: Добавлены методы для аккаунта
+const goToAccount = () => {
+  router.push('/account');
+};
+
+const handleLogout = () => {
+  console.log('Logout');
+  // Здесь будет логика выхода когда появится бэкенд
+  router.push('/');
+};
+
 const goToExport = () => {
   console.log('Переход к экспорту');
 };
@@ -352,10 +396,20 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ОБНОВЛЕНО: Flexbox layout для прижатия подвала к низу */
 .templates-view {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background: var(--bg-primary);
   color: var(--text-primary);
+}
+
+/* ОБНОВЛЕНО: Основной контент занимает все доступное пространство */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Навигация */
@@ -365,6 +419,7 @@ onMounted(() => {
   align-items: center;
   padding: 1.5rem 3rem;
   position: relative;
+  flex-shrink: 0;
 }
 
 .logo-section {
@@ -432,17 +487,75 @@ onMounted(() => {
 }
 
 .nav-item:hover,
-.nav-item.active {
+.nav-item.current-page {
   color: var(--text-primary);
   background: var(--hover-color);
   transform: translateY(-1px);
 }
 
+/* ОБНОВЛЕНО: Правая часть с авторизацией */
 .nav-right {
   flex: 1;
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: 1rem;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.auth-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  font-family: inherit;
+  letter-spacing: 0.5px;
+}
+
+.login-btn {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.login-btn:hover {
+  background: var(--hover-color);
+  transform: translateY(-1px);
+}
+
+.register-btn {
+  background: #3b1fa1;
+  color: white;
+  border-color: #3b1fa1;
+}
+
+.register-btn:hover {
+  background: #4dabf7;
+  border-color: #4dabf7;
+  transform: translateY(-1px);
+}
+
+/* ОБНОВЛЕНО: Стили для кнопок аккаунта (пока не используются) */
+.account-btn {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.logout-btn {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.logout-btn:hover {
+  background: var(--hover-color);
 }
 
 .theme-toggle {
@@ -475,6 +588,7 @@ onMounted(() => {
 /* Основной контент */
 .templates-main {
   padding: 2rem 3rem;
+  flex: 1;
 }
 
 .templates-header {
@@ -889,6 +1003,32 @@ onMounted(() => {
   
   .modal-actions {
     flex-direction: column;
+  }
+  
+  .nav {
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .nav-center {
+    order: 3;
+    flex: 100%;
+    margin-top: 1rem;
+  }
+  
+  .nav-right {
+    flex: 1;
+    justify-content: flex-end;
+  }
+  
+  .auth-buttons {
+    gap: 0.5rem;
+  }
+  
+  .auth-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
   }
 }
 </style>
