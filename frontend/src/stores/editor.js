@@ -1,8 +1,22 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 export const useEditorStore = defineStore('editor', () => {
-  const blocks = ref([]);
+  // Загружаем из localStorage при инициализации
+  const loadFromStorage = () => {
+    try {
+      const saved = localStorage.getItem('editor-state');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.blocks || [];
+      }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+    }
+    return [];
+  };
+
+  const blocks = ref(loadFromStorage());
   const activeBlockId = ref(null);
   const pageSettings = ref({
     title: 'Мой сайт',
@@ -17,6 +31,18 @@ export const useEditorStore = defineStore('editor', () => {
   );
   
   const blocksCount = computed(() => blocks.value.length);
+
+  // Сохраняем в localStorage при изменении blocks
+  watch(blocks, (newBlocks) => {
+    try {
+      localStorage.setItem('editor-state', JSON.stringify({
+        blocks: newBlocks,
+        lastSaved: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  }, { deep: true });
 
   // Инициализация структурных блоков
   const initializeStructuralBlocks = () => {

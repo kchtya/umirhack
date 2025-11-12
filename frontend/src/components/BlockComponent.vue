@@ -234,7 +234,11 @@
         <span class="block-title">{{ block.name }}</span>
         <div class="controls-actions">
           <button @click.stop="handleDuplicate" class="control-btn" title="Дублировать">
-            📋
+            <!-- ИСПРАВЛЕНА ИКОНКА: Copy -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
           </button>
           <button 
             v-if="!block.isStructural"
@@ -242,21 +246,34 @@
             class="control-btn delete" 
             title="Удалить"
           >
-            🗑️
+            <!-- ИСПРАВЛЕНА ИКОНКА: Trash2 -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
           </button>
           <button 
             @click.stop="handleMoveUp" 
             class="control-btn" 
             title="Переместить вверх"
           >
-            ↑
+            <!-- ИСПРАВЛЕНА ИКОНКА: ArrowUp -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m18 15-6-6-6 6"/>
+            </svg>
           </button>
           <button 
             @click.stop="handleMoveDown" 
             class="control-btn" 
             title="Переместить вниз"
           >
-            ↓
+            <!-- ИСПРАВЛЕНА ИКОНКА: ArrowDown -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
           </button>
         </div>
       </div>
@@ -350,7 +367,7 @@ const handleImageError = (event) => {
   event.target.style.display = 'none';
 };
 
-// НОВЫЕ МЕТОДЫ ДЛЯ ПЕРЕТАСКИВАНИЯ
+// Улучшенная логика перетаскивания
 const handleDragStart = (event) => {
   event.dataTransfer.setData('application/json', JSON.stringify({
     type: 'block-move',
@@ -376,6 +393,16 @@ const handleDragOver = (event) => {
   if (canAcceptDrop.value) {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
+    
+    // Показываем индикатор, куда будет вставлен блок
+    const rect = event.currentTarget.getBoundingClientRect();
+    const relativeY = event.clientY - rect.top;
+    const isNearTop = relativeY < rect.height * 0.3;
+    const isNearBottom = relativeY > rect.height * 0.7;
+    
+    event.currentTarget.classList.toggle('drop-top', isNearTop);
+    event.currentTarget.classList.toggle('drop-bottom', isNearBottom);
+    event.currentTarget.classList.toggle('drop-middle', !isNearTop && !isNearBottom);
   }
 };
 
@@ -393,44 +420,56 @@ const handleDragLeave = (event) => {
     if (dragCounter.value <= 0) {
       isDragOver.value = false;
       dragCounter.value = 0;
+      // Убираем индикаторы позиции
+      event.currentTarget.classList.remove('drop-top', 'drop-bottom', 'drop-middle');
     }
   }
 };
 
 const handleDrop = (event) => {
   event.preventDefault();
-  event.stopPropagation(); // ВАЖНО: останавливаем всплытие
+  event.stopPropagation();
+  
+  // Убираем индикаторы позиции
+  event.currentTarget.classList.remove('drop-top', 'drop-bottom', 'drop-middle');
   
   isDragOver.value = false;
   dragCounter.value = 0;
   
   try {
     const dragData = JSON.parse(event.dataTransfer.getData('application/json'));
-    console.log('Drop received:', dragData);
     
     if (dragData.type === 'block-move') {
-      // Нельзя перемещать блок в самого себя
-      if (dragData.blockId === props.block.id) {
-        console.log('Cannot drop block into itself');
-        return;
+      // Определяем позицию вставки на основе положения курсора
+      const rect = event.currentTarget.getBoundingClientRect();
+      const relativeY = event.clientY - rect.top;
+      let insertPosition = 0;
+      
+      if (props.block.children) {
+        if (relativeY < rect.height * 0.3) {
+          // Вставка в начало
+          insertPosition = 0;
+        } else if (relativeY > rect.height * 0.7) {
+          // Вставка в конец
+          insertPosition = props.block.children.length;
+        } else {
+          // Вставка в середину (между существующими блоками)
+          insertPosition = Math.floor(props.block.children.length / 2);
+        }
       }
       
       // Перемещаем блок
       const success = moveBlockTo(
         dragData.blockId,
-        props.block.id, // новый родитель
-        props.block.children ? props.block.children.length : 0 // позиция в конце
+        props.block.id,
+        insertPosition
       );
       
       if (success) {
         setActiveBlock(dragData.blockId);
-        console.log('Block moved successfully');
-      } else {
-        console.error('Failed to move block');
       }
     } else if (dragData.type === 'block-library') {
       // Добавляем новый блок из библиотеки
-      console.log('Adding new block to:', props.block.id);
       editorStore.addBlock(dragData.blockType, props.block.id);
     }
   } catch (error) {
@@ -478,6 +517,34 @@ const handleDrop = (event) => {
 .block-wrapper.can-accept-drop.drag-over {
   border-style: dashed;
   border-color: #4dabf7;
+}
+
+/* Индикаторы позиции при перетаскивании */
+.block-wrapper.drop-top::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #4dabf7;
+  z-index: 10;
+}
+
+.block-wrapper.drop-bottom::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #4dabf7;
+  z-index: 10;
+}
+
+.block-wrapper.drop-middle {
+  border: 2px dashed #4dabf7;
+  background: rgba(77, 171, 247, 0.1);
 }
 
 .drop-zone-empty {
@@ -793,6 +860,11 @@ const handleDrop = (event) => {
 
 .control-btn.delete:hover {
   background: #dc3545;
+}
+
+.control-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* Адаптивность */

@@ -1,6 +1,6 @@
 <template>
   <div class="auth-page" :class="themeClass">
-    <!-- Фоновые изображения -->
+    <!-- ИСПРАВЛЕНО: Фоновые изображения с cover -->
     <div class="background-container">
       <img 
         v-if="isDark" 
@@ -33,10 +33,10 @@
           </div>
         </div>
         
-        <!-- ОБНОВЛЕНО: Всегда показываем обе кнопки -->
         <div class="nav-right">
           <div class="auth-buttons">
-            <button class="auth-btn login-btn" @click="goToLogin">Войти</button>
+            <!-- ИСПРАВЛЕНО: Кнопка с адаптивным цветом -->
+            <button class="auth-btn login-btn adaptive-btn" @click="goToLogin">Войти</button>
             <button class="auth-btn register-btn current-page">Регистрация</button>
           </div>
           <button 
@@ -49,11 +49,9 @@
       </nav>
     </header>
 
-    <!-- ОБНОВЛЕНО: Основной контент в main -->
     <main class="main-content">
       <div class="auth-content">
         <div class="auth-container">
-          <!-- ОБНОВЛЕНО: Добавлены отступы сверху и снизу для "дыхания" -->
           <div class="auth-card-wrapper">
             <div class="auth-card">
               <h2>Регистрация</h2>
@@ -70,7 +68,8 @@
                   <label>Подтвердите пароль</label>
                   <input type="password" v-model="confirmPassword" required>
                 </div>
-                <button type="submit" class="auth-submit-btn">Зарегистрироваться</button>
+                <!-- ИСПРАВЛЕНО: Кнопка с адаптивным цветом -->
+                <button type="submit" class="auth-submit-btn adaptive-btn">Зарегистрироваться</button>
               </form>
               <p class="auth-link">
                 Уже есть аккаунт? <span @click="goToLogin">Войти</span>
@@ -81,7 +80,6 @@
       </div>
     </main>
 
-    <!-- ДОБАВЛЕН ПОДВАЛ -->
     <AppFooter />
   </div>
 </template>
@@ -91,12 +89,12 @@ import { computed, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useThemeStore } from '../stores/theme'
 import { storeToRefs } from 'pinia'
-import AppFooter from '../components/AppFooter.vue' // ДОБАВЛЕН ИМПОРТ
+import AppFooter from '../components/AppFooter.vue'
 
 export default {
   name: 'RegisterView',
   components: {
-    AppFooter // ДОБАВЛЕН КОМПОНЕНТ
+    AppFooter
   },
   setup() {
     const router = useRouter()
@@ -157,7 +155,6 @@ export default {
 </script>
 
 <style scoped>
-/* ОБНОВЛЕНО: Flexbox layout для прижатия подвала к низу */
 .auth-page {
   min-height: 100vh;
   display: flex;
@@ -165,9 +162,9 @@ export default {
   background: var(--bg-primary);
   color: var(--text-primary);
   position: relative;
+  overflow: hidden; /* ИСПРАВЛЕНО: Добавил чтобы убрать скролл фона */
 }
 
-/* ОБНОВЛЕНО: Основной контент занимает все доступное пространство */
 .main-content {
   flex: 1;
   display: flex;
@@ -194,25 +191,26 @@ export default {
   letter-spacing: 0.5px;
 }
 
-.login-btn {
-  background: transparent;
-  color: var(--text-primary);
+/* ИСПРАВЛЕНО: Адаптивная кнопка */
+.adaptive-btn {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
 }
 
-.login-btn:hover {
-  background: var(--hover-color);
+.adaptive-btn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
   transform: translateY(-1px);
 }
 
 .register-btn {
-  background: #3b1fa1;
-  color: white;
-  border-color: #3b1fa1;
+  background: transparent;
+  color: var(--text-primary);
 }
 
 .register-btn:hover {
-  background: #4dabf7;
-  border-color: #4dabf7;
+  background: var(--hover-color);
   transform: translateY(-1px);
 }
 
@@ -230,7 +228,7 @@ export default {
   transform: none;
 }
 
-/* Фоновые изображения */
+/* ИСПРАВЛЕНО: Фоновые изображения с cover и без рамок */
 .background-container {
   position: fixed;
   top: 0;
@@ -244,11 +242,11 @@ export default {
 .background-image {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: top center;
+  object-fit: cover; /* ИСПРАВЛЕНО: cover вместо contain */
+  object-position: center;
 }
 
-/* Навигация */
+/* Остальные стили остаются без изменений */
 .nav {
   display: flex;
   justify-content: space-between;
@@ -337,7 +335,7 @@ export default {
   left: 50%;
   width: 0;
   height: 2px;
-  background: #3b1fa1;
+  background: var(--accent-color);
   transition: all 0.3s ease;
   transform: translateX(-50%);
 }
@@ -352,28 +350,6 @@ export default {
   justify-content: flex-end;
   align-items: center;
   gap: 1rem;
-}
-
-.auth-btn {
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid var(--border-color);
-  font-family: inherit;
-  letter-spacing: 0.5px;
-}
-
-.login-btn {
-  background: transparent;
-  color: var(--text-primary);
-}
-
-.login-btn:hover {
-  background: var(--hover-color);
-  transform: translateY(-1px);
 }
 
 .theme-toggle {
@@ -394,7 +370,7 @@ export default {
 .theme-toggle:hover {
   background: var(--hover-color);
   transform: scale(1.05);
-  border-color: #3b1fa1;
+  border-color: var(--accent-color);
 }
 
 .theme-icon {
@@ -403,13 +379,12 @@ export default {
   position: relative;
 }
 
-/* ОБНОВЛЕНО: Контент авторизации с увеличенными отступами */
 .auth-content {
   display: flex;
   align-items: center;
   justify-content: center;
   flex: 1;
-  padding: 4rem 2rem; /* Увеличили отступы сверху и снизу */
+  padding: 4rem 2rem;
   position: relative;
   z-index: 1;
 }
@@ -419,18 +394,17 @@ export default {
   max-width: 400px;
 }
 
-/* ОБНОВЛЕНО: Добавлен wrapper для дополнительного "дыхания" */
 .auth-card-wrapper {
-  padding: 3rem 0; /* Дополнительные отступы сверху и снизу */
+  padding: 3rem 0;
 }
 
 .auth-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 20px; /* Увеличили радиус скругления */
-  padding: 3rem; /* Увеличили внутренние отступы */
+  border-radius: 20px;
+  padding: 3rem;
   backdrop-filter: blur(10px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); /* Добавили тень для глубины */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -441,23 +415,23 @@ export default {
 
 .auth-card h2 {
   text-align: center;
-  margin-bottom: 2.5rem; /* Увеличили отступ снизу */
+  margin-bottom: 2.5rem;
   color: var(--text-primary);
   font-family: inherit;
-  font-size: 1.8rem; /* Увеличили размер шрифта */
+  font-size: 1.8rem;
   font-weight: 600;
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 2rem; /* Увеличили расстояние между полями */
+  gap: 2rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem; /* Увеличили расстояние между label и input */
+  gap: 0.8rem;
 }
 
 .form-group label {
@@ -468,9 +442,9 @@ export default {
 }
 
 .form-group input {
-  padding: 15px; /* Увеличили padding для большего комфорта */
+  padding: 15px;
   border: 1px solid var(--border-color);
-  border-radius: 10px; /* Увеличили радиус скругления */
+  border-radius: 10px;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: inherit;
@@ -480,40 +454,33 @@ export default {
 
 .form-group input:focus {
   outline: none;
-  border-color: #3b1fa1;
-  box-shadow: 0 0 0 3px rgba(59, 31, 161, 0.1); /* Добавили свечение при фокусе */
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(59, 31, 161, 0.1);
 }
 
 .auth-submit-btn {
-  background: #3b1fa1;
   color: white;
   border: none;
-  padding: 16px; /* Увеличили padding */
-  border-radius: 10px; /* Увеличили радиус скругления */
-  font-size: 1.1rem; /* Увеличили размер шрифта */
+  padding: 16px;
+  border-radius: 10px;
+  font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   font-family: inherit;
-  margin-top: 1.5rem; /* Увеличили отступ сверху */
-}
-
-.auth-submit-btn:hover {
-  background: #4dabf7;
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(59, 31, 161, 0.3);
+  margin-top: 1.5rem;
 }
 
 .auth-link {
   text-align: center;
-  margin-top: 2rem; /* Увеличили отступ сверху */
+  margin-top: 2rem;
   color: var(--text-secondary);
   font-family: inherit;
   font-size: 1rem;
 }
 
 .auth-link span {
-  color: #3b1fa1;
+  color: var(--accent-color);
   cursor: pointer;
   text-decoration: underline;
   font-weight: 500;
@@ -521,7 +488,7 @@ export default {
 }
 
 .auth-link span:hover {
-  color: #4dabf7;
+  color: var(--accent-hover);
 }
 
 .theme-dark {
@@ -560,15 +527,15 @@ export default {
   }
   
   .auth-content {
-    padding: 2rem 1rem; /* Адаптивные отступы для мобильных */
+    padding: 2rem 1rem;
   }
   
   .auth-card-wrapper {
-    padding: 2rem 0; /* Меньшие отступы на мобильных */
+    padding: 2rem 0;
   }
   
   .auth-card {
-    padding: 2rem; /* Меньшие внутренние отступы на мобильных */
+    padding: 2rem;
     border-radius: 16px;
   }
   

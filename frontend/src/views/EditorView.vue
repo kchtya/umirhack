@@ -12,7 +12,8 @@
           <div class="nav-menu">
             <span class="nav-item current-page">Конструктор</span>
             <span @click="goToTemplates" class="nav-item">Шаблоны</span>
-            <span @click="goToHome" class="nav-item">Главная</span>
+            <!-- ИСПРАВЛЕНО: Заменил "Главная" на "Экспорт" -->
+            <span @click="handleExport" class="nav-item">Экспорт</span>
           </div>
         </div>
         
@@ -24,6 +25,7 @@
             </div>
           </div>
           <button class="theme-toggle" @click="toggleTheme">
+            <!-- ОСТАВИЛ: Эмодзи для темы как было -->
             <span class="theme-icon">{{ isDark ? '☀️' : '🌙' }}</span>
           </button>
         </div>
@@ -55,11 +57,22 @@
                   <span class="stat-number">{{ blocksCount }}</span>
                   <span class="stat-label">БЛОКОВ</span>
                 </div>
+                <!-- ИСПРАВЛЕНО: Заменил эмодзи на SVG иконку Maximize2 -->
                 <button @click="toggleFullscreenPreview" class="preview-fullscreen-btn" title="Полноэкранный предпросмотр">
-                  📺 Полный экран
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                  </svg>
+                  Полный экран
                 </button>
+                <!-- ИСПРАВЛЕНО: Заменил текст на SVG иконку Trash2 -->
                 <button @click="clearAllBlocks" class="clear-btn" title="Очистить все блоки">
-                  Очистить
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18"></path>
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
                 </button>
               </div>
             </div>
@@ -67,11 +80,16 @@
             <!-- Пустое состояние -->
             <div v-if="blocksCount === 0" class="empty-state">
               <div class="empty-icon">
-                <Download :size="48" />
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7,10 12,15 17,10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
               </div>
               <p>ПЕРЕТАЩИТЕ БЛОКИ ДЛЯ НАЧАЛА РАБОТЫ</p>
               <p class="empty-hint">Начните с контейнера или секции</p>
-              <button @click="initializeStructuralBlocks" class="btn-primary">
+              <!-- ИСПРАВЛЕНО: Кнопка с адаптивным цветом под тему -->
+              <button @click="initializeStructuralBlocks" class="btn-primary adaptive-btn">
                 Создать базовую структуру
               </button>
             </div>
@@ -105,8 +123,13 @@
     <!-- Полноэкранный предпросмотр -->
     <div v-if="fullscreenPreview" class="fullscreen-preview">
       <div class="preview-header">
+        <!-- ИСПРАВЛЕНО: Заменил эмодзи на SVG иконку X -->
         <button @click="toggleFullscreenPreview" class="close-preview-btn">
-          ✕ Закрыть предпросмотр
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+          Закрыть предпросмотр
         </button>
         <div class="preview-info">
           Предпросмотр сайта - <span class="preview-url">mysite.com</span>
@@ -157,7 +180,12 @@
               @error="handleImageError"
             >
             <div v-else class="preview-image-placeholder">
-              📷 Изображение
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21,15 16,10 5,21"></polyline>
+              </svg>
+              Изображение
             </div>
           </div>
 
@@ -231,11 +259,6 @@ import PageSettings from '../components/PageSettings.vue';
 import AppFooter from '../components/AppFooter.vue';
 import BlockComponent from '../components/BlockComponent.vue';
 
-// Иконки Lucide
-import { 
-  Download
-} from 'lucide-vue-next';
-
 export default {
   name: 'EditorView',
   components: {
@@ -243,8 +266,7 @@ export default {
     Toolbar,
     PageSettings,
     AppFooter,
-    BlockComponent,
-    Download
+    BlockComponent
   },
   setup() {
     const editorStore = useEditorStore();
@@ -557,14 +579,14 @@ export default {
 }
 
 .register-btn {
-  background: #3b1fa1;
+  background: var(--accent-color);
   color: white;
-  border-color: #3b1fa1;
+  border-color: var(--accent-color);
 }
 
 .register-btn:hover {
-  background: #4dabf7;
-  border-color: #4dabf7;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
   transform: translateY(-1px);
 }
 
@@ -586,7 +608,7 @@ export default {
 .theme-toggle:hover {
   background: var(--hover-color);
   transform: scale(1.05);
-  border-color: #3b1fa1;
+  border-color: var(--accent-color);
 }
 
 .theme-icon {
@@ -639,7 +661,7 @@ export default {
   right: 0;
   bottom: 0;
   background: rgba(59, 31, 161, 0.05);
-  border: 2px dashed #3b1fa1;
+  border: 2px dashed var(--accent-color);
   pointer-events: none;
   z-index: 5;
 }
@@ -686,7 +708,7 @@ export default {
   font-size: 1.5rem;
   font-weight: 300;
   letter-spacing: 1px;
-  color: #3b1fa1;
+  color: var(--accent-color);
 }
 
 .stat-label {
@@ -697,25 +719,29 @@ export default {
   text-transform: uppercase;
 }
 
+
 .preview-fullscreen-btn {
   padding: 8px 16px;
-  background: #28a745;
-  color: white;
+  background: var(--accent-color);
+  color: white; 
   border: none;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.8rem;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .preview-fullscreen-btn:hover {
-  background: #34ce57;
+  background: var(--accent-hover);
   transform: translateY(-1px);
 }
 
 .clear-btn {
-  padding: 8px 16px;
+  padding: 8px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -723,12 +749,15 @@ export default {
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .clear-btn:hover {
-  background: #dc3545;
+  background: var(--danger-color, #dc3545);
   color: white;
-  border-color: #dc3545;
+  border-color: var(--danger-color, #dc3545);
 }
 
 .blocks-container {
@@ -783,9 +812,10 @@ export default {
   color: var(--text-tertiary);
 }
 
-.btn-primary {
+/* ИСПРАВЛЕНО: Адаптивная кнопка под тему */
+.adaptive-btn {
   padding: 12px 24px;
-  background: #3b1fa1;
+  background: var(--accent-color);
   color: white;
   border: none;
   border-radius: 8px;
@@ -794,8 +824,8 @@ export default {
   transition: all 0.3s ease;
 }
 
-.btn-primary:hover {
-  background: #4dabf7;
+.adaptive-btn:hover {
+  background: var(--accent-hover);
   transform: translateY(-2px);
 }
 
@@ -823,17 +853,20 @@ export default {
 
 .close-preview-btn {
   padding: 10px 20px;
-  background: #dc3545;
+  background: var(--danger-color, #dc3545);
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .close-preview-btn:hover {
-  background: #c82333;
+  background: var(--danger-hover, #c82333);
   transform: translateY(-1px);
 }
 
@@ -844,7 +877,7 @@ export default {
 
 .preview-url {
   font-weight: 500;
-  color: #3b1fa1;
+  color: var(--accent-color);
 }
 
 .preview-content {
@@ -889,7 +922,7 @@ export default {
 }
 
 .preview-nav span:hover {
-  color: #3b1fa1;
+  color: var(--accent-color);
 }
 
 .preview-hero {
@@ -939,7 +972,7 @@ export default {
 
 .preview-btn-element {
   padding: 15px 30px;
-  background: #3b1fa1;
+  background: var(--accent-color);
   color: white;
   border: none;
   border-radius: 8px;
@@ -950,7 +983,7 @@ export default {
 }
 
 .preview-btn-element:hover {
-  background: #4dabf7;
+  background: var(--accent-hover);
   transform: translateY(-2px);
 }
 
@@ -974,6 +1007,10 @@ export default {
   color: #999;
   text-align: center;
   font-size: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 .preview-text {
