@@ -3,15 +3,15 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Validate environment variables (проверить переменные окружения)
+// Выбор ключа в зависимости от окружения
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env file');
 }
 
-// Create Supabase client
+// Создание клиента
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
@@ -23,25 +23,25 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   }
 });
 
-// Test connection (проверить подключение)
+// Тест подключения
 export const testConnection = async () => {
   try {
     const { data, error } = await supabase.from('users').select('count').limit(1);
     
     if (error) {
-      console.error('❌ Supabase connection failed:', error.message);
+      console.error('Supabase connection failed:', error.message);
       return false;
     }
     
-    console.log('✅ Supabase connected successfully');
+    console.log('Supabase connected successfully');
     return true;
   } catch (error) {
-    console.error('❌ Supabase connection error:', error.message);
+    console.error('Supabase connection error:', error.message);
     return false;
   }
 };
 
-// Helper function for error handling (помощник для обработки ошибок)
+// Обработка ошибок
 export const handleSupabaseError = (error) => {
   console.error('Supabase Error:', error);
   
