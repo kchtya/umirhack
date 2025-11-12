@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import templateRoutes from './routes/templates.js';
+import projectRoutes from './routes/projects.js';
 
 // Load environment variables (загрузка переменных окружения)
 dotenv.config();
@@ -76,6 +77,7 @@ app.get('/api/projects', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/templates', templateRoutes);
+app.use('/api/projects', projectRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -116,10 +118,10 @@ app.use((error, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Backend server running on http://localhost:${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`📁 Static files: http://localhost:${PORT}/uploads`);
+  console.log(`Backend server running on http://localhost:${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Health check: http://localhost:${PORT}/api/health`);
+  console.log(`Static files: http://localhost:${PORT}/uploads`);
 });
 
 export default app;
