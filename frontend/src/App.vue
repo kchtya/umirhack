@@ -1,20 +1,23 @@
 <template>
-  <div id="app" :class="currentTheme">
+  <div id="app" :class="currentTheme" :style="pageStyles">
     <div class="global-ripple" :class="{ active: isRippling }" :style="rippleStyle"></div>
     <router-view />
   </div>
 </template>
 
 <script>
-import { ref, computed, provide } from 'vue'
+import { ref, computed, provide, watch } from 'vue'
 import { useThemeStore } from './stores/theme'
+import { useEditorStore } from './stores/editor'
 import { storeToRefs } from 'pinia'
 
 export default {
   name: 'App',
   setup() {
     const themeStore = useThemeStore()
+    const editorStore = useEditorStore()
     const { currentTheme } = storeToRefs(themeStore)
+    const { pageSettings } = storeToRefs(editorStore)
     const isRippling = ref(false)
     const rippleOrigin = ref({ x: 0, y: 0 })
 
@@ -23,6 +26,24 @@ export default {
         '--ripple-x': `${rippleOrigin.value.x}px`,
         '--ripple-y': `${rippleOrigin.value.y}px`
       }
+    })
+
+    const pageStyles = computed(() => {
+      const styles = {
+        backgroundColor: pageSettings.value.backgroundColor || 'var(--bg-primary)',
+        minHeight: '100vh',
+        transition: 'all 0.3s ease'
+      }
+
+      if (pageSettings.value.backgroundImage && pageSettings.value.backgroundImage !== '') {
+        styles.backgroundImage = `url(${pageSettings.value.backgroundImage})`
+        styles.backgroundSize = pageSettings.value.backgroundSize || 'cover'
+        styles.backgroundPosition = pageSettings.value.backgroundPosition || 'center'
+        styles.backgroundRepeat = 'no-repeat'
+        styles.backgroundAttachment = 'fixed'
+      }
+
+      return styles
     })
 
     const startRipple = (event) => {
@@ -46,7 +67,8 @@ export default {
     return {
       currentTheme,
       isRippling,
-      rippleStyle
+      rippleStyle,
+      pageStyles
     }
   }
 }
@@ -74,26 +96,26 @@ body {
 /* Тёмная тема (по умолчанию) */
 .theme-dark {
   --bg-primary: #0a0a0a;
-  --bg-secondary: #111111;
-  --bg-tertiary: rgba(255,255,255,0.05);
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #2a2a2a;
   --text-primary: #ffffff;
-  --text-secondary: rgba(255,255,255,0.8);
-  --text-tertiary: rgba(255,255,255,0.6);
-  --border-color: rgba(255,255,255,0.1);
-  --accent-color: rgba(255,255,255,0.2);
+  --text-secondary: #b0b0b0;
+  --text-tertiary: #808080;
+  --border-color: #404040;
+  --accent-color: #3b1fa1;
   --hover-color: rgba(255,255,255,0.08);
 }
 
 /* Светлая тема */
 .theme-light {
-  --bg-primary: #f8f6f2;
+  --bg-primary: #f8f9fa;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #ffffff;
-  --text-primary: #2a2a2a;
-  --text-secondary: rgba(0,0,0,0.7);
-  --text-tertiary: rgba(0,0,0,0.5);
-  --border-color: rgba(0,0,0,0.1);
-  --accent-color: rgba(0,0,0,0.1);
+  --bg-tertiary: #e9ecef;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-tertiary: #adb5bd;
+  --border-color: #dee2e6;
+  --accent-color: #3b1fa1;
   --hover-color: rgba(0,0,0,0.05);
 }
 

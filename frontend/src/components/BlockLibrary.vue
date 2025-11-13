@@ -7,6 +7,25 @@
     
     <div class="library-content">
       <div class="library-sections">
+        <!-- Контейнеры и секции -->
+        <div class="section">
+          <h4 class="section-title">СТРУКТУРА</h4>
+          <div class="blocks-grid">
+            <div 
+              v-for="blockType in structureBlocks" 
+              :key="blockType.type"
+              class="block-item" 
+              draggable="true"
+              @dragstart="onDragStart(blockType, $event)"
+            >
+              <div class="block-icon">
+                <component :is="blockType.icon" :size="20" />
+              </div>
+              <span class="block-name">{{ blockType.name }}</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Основные блоки -->
         <div class="section">
           <h4 class="section-title">ОСНОВНЫЕ</h4>
@@ -18,24 +37,28 @@
               draggable="true"
               @dragstart="onDragStart(blockType, $event)"
             >
-              <span class="block-icon">{{ blockType.emoji }}</span>
+              <div class="block-icon">
+                <component :is="blockType.icon" :size="20" />
+              </div>
               <span class="block-name">{{ blockType.name }}</span>
             </div>
           </div>
         </div>
         
-        <!-- Секции -->
+        <!-- Медиа блоки -->
         <div class="section">
-          <h4 class="section-title">СЕКЦИИ</h4>
+          <h4 class="section-title">МЕДИА</h4>
           <div class="blocks-grid">
             <div 
-              v-for="blockType in sectionBlocks" 
+              v-for="blockType in mediaBlocks" 
               :key="blockType.type"
               class="block-item" 
               draggable="true"
               @dragstart="onDragStart(blockType, $event)"
             >
-              <span class="block-icon">{{ blockType.emoji }}</span>
+              <div class="block-icon">
+                <component :is="blockType.icon" :size="20" />
+              </div>
               <span class="block-name">{{ blockType.name }}</span>
             </div>
           </div>
@@ -46,31 +69,53 @@
 </template>
 
 <script setup>
-import { useEditorStore } from '../stores/editor';
+import { 
+  Heading, 
+  Pilcrow, 
+  MousePointerClick, 
+  Image, 
+  Type,
+  Star,
+  Wrench,
+  MessageCircle,
+  Mail,
+  Minus,
+  Container,
+  Columns,
+  PanelTop
+} from 'lucide-vue-next';
 
-const editorStore = useEditorStore();
+const structureBlocks = [
+  { type: 'container', name: 'Контейнер', icon: Container },
+  { type: 'section', name: 'Секция', icon: PanelTop },
+  { type: 'columns', name: 'Колонки', icon: Columns },
+  { type: 'header', name: 'Шапка', icon: PanelTop },
+  { type: 'footer', name: 'Футер', icon: Minus }
+];
 
 const basicBlocks = [
-  { type: 'heading', name: 'Заголовок', emoji: '📝' },
-  { type: 'paragraph', name: 'Параграф', emoji: '📄' },
-  { type: 'button', name: 'Кнопка', emoji: '🔘' },
-  { type: 'image', name: 'Изображение', emoji: '🖼️' },
-  { type: 'text', name: 'Текст', emoji: '✏️' }
+  { type: 'hero', name: 'Hero Секция', icon: Star },
+  { type: 'heading', name: 'Заголовок', icon: Heading },
+  { type: 'paragraph', name: 'Параграф', icon: Pilcrow },
+  { type: 'button', name: 'Кнопка', icon: MousePointerClick },
+  { type: 'text', name: 'Текст', icon: Type }
 ];
 
-const sectionBlocks = [
-  { type: 'hero', name: 'Hero Секция', emoji: '⭐' },
-  { type: 'features', name: 'Функции', emoji: '🔧' },
-  { type: 'testimonials', name: 'Отзывы', emoji: '💬' },
-  { type: 'contact', name: 'Контакты', emoji: '📧' },
-  { type: 'footer', name: 'Футер', emoji: '🔻' }
+const mediaBlocks = [
+  { type: 'image', name: 'Изображение', icon: Image },
+  { type: 'features', name: 'Функции', icon: Wrench },
+  { type: 'testimonials', name: 'Отзывы', icon: MessageCircle },
+  { type: 'contact', name: 'Контакты', icon: Mail }
 ];
 
-const allBlocks = [...basicBlocks, ...sectionBlocks];
+const allBlocks = [...structureBlocks, ...basicBlocks, ...mediaBlocks];
 
 const onDragStart = (blockType, event) => {
   console.log('Drag start:', blockType);
-  event.dataTransfer.setData('application/json', JSON.stringify(blockType));
+  event.dataTransfer.setData('application/json', JSON.stringify({
+    type: 'block-library',
+    blockType: blockType.type
+  }));
   event.dataTransfer.effectAllowed = 'copy';
 };
 </script>
@@ -116,6 +161,7 @@ const onDragStart = (blockType, event) => {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  background: var(--bg-secondary);
 }
 
 .library-sections {
@@ -152,7 +198,7 @@ const onDragStart = (blockType, event) => {
   padding: 1rem 1.2rem;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: grab;
   transition: all 0.3s ease;
   position: relative;
@@ -187,11 +233,16 @@ const onDragStart = (blockType, event) => {
 }
 
 .block-icon {
-  font-size: 1.3rem;
-  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
   flex-shrink: 0;
-  width: 24px;
-  text-align: center;
+  color: var(--text-primary);
 }
 
 .block-name {
