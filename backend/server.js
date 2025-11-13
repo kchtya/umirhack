@@ -19,10 +19,14 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Auth routes
+app.use('/api/auth', require('./routes/auth'));
+
+// Projects routes
 app.get('/api/projects', (req, res) => {
-  res.json({
-    success: true,
-    data: [
+      res.json({
+      success: true,
+      data: [
       { id: 1, name: 'Тестовый проект 1', description: 'Первый проект' },
       { id: 2, name: 'Тестовый проект 2', description: 'Второй проект' }
     ]
