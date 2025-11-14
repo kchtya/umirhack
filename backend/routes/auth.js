@@ -11,4 +11,8 @@ router.post('/login', authController.login);
 // Выход
 router.post('/logout', authController.logout);
 
+// Добавь новые роуты:
+router.get('/me', authController.getMe);
+router.post('/make-admin', authController.makeAdmin);
+
 module.exports = router;
