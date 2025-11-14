@@ -21,21 +21,13 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    // Получаем данные пользователя из нашей таблицы users
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    if (userError || !userData) {
-      return res.status(401).json({ 
-        success: false, 
-        error: 'Пользователь не найден' 
-      });
-    }
-
-    req.user = userData;
+    // Используем данные из Supabase Auth, не проверяем таблицу users
+    req.user = {
+      id: user.id,
+      email: user.email,
+      role: 'user' // По умолчанию
+    };
+    
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);

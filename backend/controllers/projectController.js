@@ -69,7 +69,7 @@ const projectController = {
   // Создание проекта
   async createProject(req, res) {
     try {
-      const { title, description, content, image_url, demo_url, source_code_url, tags } = req.body;
+      const { title, description, content } = req.body;
 
       // Получаем текущий максимальный порядок
       const { data: maxOrder } = await supabase
@@ -85,11 +85,7 @@ const projectController = {
         description: description || '',
         content: content || {},
         user_id: req.user.id,
-        project_order: (maxOrder?.project_order || 0) + 1,
-        image_url,
-        demo_url,
-        source_code_url,
-        tags: tags || []
+        project_order: (maxOrder?.project_order || 0) + 1
       };
 
       const { data: project, error } = await supabase

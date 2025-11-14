@@ -23,18 +23,14 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 
 // Projects routes
-app.get('/api/projects', (req, res) => {
-      res.json({
-      success: true,
-      data: [
-      { id: 1, name: 'Тестовый проект 1', description: 'Первый проект' },
-      { id: 2, name: 'Тестовый проект 2', description: 'Второй проект' }
-    ]
-  });
-});
+app.use('/api/projects', require('./routes/projects'));
+
+// ✅ ДОБАВЛЕНО: Templates routes
+app.use('/api/templates', require('./routes/templates'));
 
 // Запуск сервера
 app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/api/health`);
+  console.log(`Templates: http://localhost:${PORT}/api/templates`);
 });

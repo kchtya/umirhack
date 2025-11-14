@@ -3,7 +3,7 @@ const supabase = require('../config/supabaseClient');
 const authController = {
   async register(req, res) {
     try {
-      const { email, password, username } = req.body;
+      const { email, password, name } = req.body;
       if (!email || !password) {
         return res.status(400).json({ 
           success: false, 
@@ -23,31 +23,24 @@ const authController = {
         });
       }
 
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .insert([{ 
-          id: authData.user.id, 
-          email: email, 
-          username: username, 
-          role: 'user' 
-        }])
-        .select()
-        .single();
-
-      if (userError) {
-        await supabase.auth.admin.deleteUser(authData.user.id);
+      // УБРАН блок с созданием в таблице users - используем только Supabase Auth
+      if (authData.user) {
+        res.status(201).json({ 
+          success: true, 
+          message: 'Пользователь успешно зарегистрирован', 
+          user: {
+            id: authData.user.id,
+            email: authData.user.email,
+            name: name
+          },
+          session: authData.session 
+        });
+      } else {
         return res.status(400).json({ 
           success: false, 
-          error: userError.message 
+          error: 'Ошибка регистрации' 
         });
       }
-
-      res.status(201).json({ 
-        success: true, 
-        message: 'Пользователь успешно зарегистрирован', 
-        user: userData, 
-        session: authData.session 
-      });
     } catch (error) {
       res.status(500).json({ 
         success: false, 
@@ -78,23 +71,14 @@ const authController = {
         });
       }
 
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
-
-      if (userError) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Пользователь не найден' 
-        });
-      }
-
+      // Для входа тоже убираем обращение к таблице users
       res.json({ 
         success: true, 
         message: 'Вход выполнен успешно', 
-        user: userData, 
+        user: {
+          id: data.user.id,
+          email: data.user.email
+        },
         session: data.session 
       });
     } catch (error) {
@@ -140,22 +124,13 @@ const authController = {
         });
       }
 
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (userError || !userData) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Пользователь не найден' 
-        });
-      }
-
+      // Убираем обращение к таблице users
       res.json({ 
         success: true, 
-        user: userData 
+        user: {
+          id: user.id,
+          email: user.email
+        }
       });
     } catch (error) {
       res.status(500).json({ 
@@ -167,33 +142,10 @@ const authController = {
 
   async makeAdmin(req, res) {
     try {
-      const { email } = req.body;
-      const { data: user, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .single();
-
-      if (error || !user) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Пользователь не найден' 
-        });
-      }
-
-      const { data: updatedUser, error: updateError } = await supabase
-        .from('users')
-        .update({ role: 'admin' })
-        .eq('id', user.id)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-
-      res.json({ 
-        success: true, 
-        message: 'Права администратора выданы', 
-        user: updatedUser 
+      // Временно отключаем функцию выдачи админки
+      return res.status(501).json({ 
+        success: false, 
+        error: 'Функция временно недоступна' 
       });
     } catch (error) {
       res.status(500).json({ 
