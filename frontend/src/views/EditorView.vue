@@ -12,7 +12,6 @@
           <div class="nav-menu">
             <span class="nav-item current-page">Конструктор</span>
             <span @click="goToTemplates" class="nav-item">Шаблоны</span>
-            <!-- ИСПРАВЛЕНО: Заменил "Главная" на "Экспорт" -->
             <span @click="handleExport" class="nav-item">Экспорт</span>
           </div>
         </div>
@@ -25,7 +24,6 @@
             </div>
           </div>
           <button class="theme-toggle" @click="toggleTheme">
-            <!-- ОСТАВИЛ: Эмодзи для темы как было -->
             <span class="theme-icon">{{ isDark ? '☀️' : '🌙' }}</span>
           </button>
         </div>
@@ -57,22 +55,12 @@
                   <span class="stat-number">{{ blocksCount }}</span>
                   <span class="stat-label">БЛОКОВ</span>
                 </div>
-                <!-- ИСПРАВЛЕНО: Заменил эмодзи на SVG иконку Maximize2 -->
                 <button @click="toggleFullscreenPreview" class="preview-fullscreen-btn" title="Полноэкранный предпросмотр">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-                  </svg>
+                  <Maximize2 :size="16" />
                   Полный экран
                 </button>
-                <!-- ИСПРАВЛЕНО: Заменил текст на SVG иконку Trash2 -->
                 <button @click="clearAllBlocks" class="clear-btn" title="Очистить все блоки">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 6h18"></path>
-                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                  </svg>
+                  <Trash2 :size="16" />
                 </button>
               </div>
             </div>
@@ -80,15 +68,10 @@
             <!-- Пустое состояние -->
             <div v-if="blocksCount === 0" class="empty-state">
               <div class="empty-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7,10 12,15 17,10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
+                <Download :size="48" />
               </div>
               <p>ПЕРЕТАЩИТЕ БЛОКИ ДЛЯ НАЧАЛА РАБОТЫ</p>
               <p class="empty-hint">Начните с контейнера или секции</p>
-              <!-- ИСПРАВЛЕНО: Кнопка с адаптивным цветом под тему -->
               <button @click="initializeStructuralBlocks" class="btn-primary adaptive-btn">
                 Создать базовую структуру
               </button>
@@ -123,12 +106,8 @@
     <!-- Полноэкранный предпросмотр -->
     <div v-if="fullscreenPreview" class="fullscreen-preview">
       <div class="preview-header">
-        <!-- ИСПРАВЛЕНО: Заменил эмодзи на SVG иконку X -->
         <button @click="toggleFullscreenPreview" class="close-preview-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6 6 18"></path>
-            <path d="m6 6 12 12"></path>
-          </svg>
+          <X :size="16" />
           Закрыть предпросмотр
         </button>
         <div class="preview-info">
@@ -180,11 +159,7 @@
               @error="handleImageError"
             >
             <div v-else class="preview-image-placeholder">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21,15 16,10 5,21"></polyline>
-              </svg>
+              <Image :size="24" />
               Изображение
             </div>
           </div>
@@ -259,6 +234,15 @@ import PageSettings from '../components/PageSettings.vue';
 import AppFooter from '../components/AppFooter.vue';
 import BlockComponent from '../components/BlockComponent.vue';
 
+// Иконки Lucide
+import { 
+  Download,
+  Maximize2,
+  Trash2,
+  X,
+  Image
+} from 'lucide-vue-next';
+
 export default {
   name: 'EditorView',
   components: {
@@ -266,7 +250,12 @@ export default {
     Toolbar,
     PageSettings,
     AppFooter,
-    BlockComponent
+    BlockComponent,
+    Download,
+    Maximize2,
+    Trash2,
+    X,
+    Image
   },
   setup() {
     const editorStore = useEditorStore();
@@ -342,19 +331,348 @@ export default {
     };
 
     const handleExport = () => {
-      const projectData = {
-        name: 'Мой проект',
-        blocks: blocks.value,
-        exportedAt: new Date().toISOString()
+      // Функция для генерации HTML
+      const generateHTML = (blocks, pageSettings) => {
+        const styles = generateCSS(blocks, pageSettings);
+        const htmlStructure = generateHTMLStructure(blocks);
+        
+        return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${pageSettings.title || 'Мой сайт'}</title>
+    <style>
+${styles}
+    </style>
+</head>
+<body>
+${htmlStructure}
+</body>
+</html>`;
       };
+
+      // Функция для генерации CSS
+      const generateCSS = (blocks, pageSettings) => {
+        let css = `
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  line-height: 1.6;
+  background-color: ${pageSettings.backgroundColor || '#ffffff'};
+  ${pageSettings.backgroundImage && pageSettings.backgroundImage !== '' 
+    ? `background-image: url('${pageSettings.backgroundImage}');
+  background-size: ${pageSettings.backgroundSize || 'cover'};
+  background-position: ${pageSettings.backgroundPosition || 'center'};
+  background-repeat: no-repeat;` 
+    : ''}
+}
+
+/* Block styles */
+${generateBlockCSS(blocks)}
+`;
+
+        return css;
+      };
+
+      const generateBlockCSS = (blocks) => {
+        let css = '';
+        
+        blocks.forEach(block => {
+          const blockId = `block-${block.id}`;
+          const styles = block.styles || {};
+          
+          // Генерируем CSS для текущего блока
+          css += `
+.${blockId} {
+  ${styles.backgroundColor ? `background-color: ${styles.backgroundColor};` : ''}
+  ${styles.backgroundImage && styles.backgroundImage !== 'none' ? `background-image: ${styles.backgroundImage};` : ''}
+  ${styles.backgroundSize ? `background-size: ${styles.backgroundSize};` : ''}
+  ${styles.backgroundPosition ? `background-position: ${styles.backgroundPosition};` : ''}
+  ${styles.color ? `color: ${styles.color};` : ''}
+  ${styles.fontSize ? `font-size: ${styles.fontSize};` : ''}
+  ${styles.fontFamily && styles.fontFamily !== 'inherit' ? `font-family: ${styles.fontFamily};` : ''}
+  ${styles.textAlign ? `text-align: ${styles.textAlign};` : ''}
+  ${styles.fontWeight ? `font-weight: ${styles.fontWeight};` : ''}
+  ${styles.padding ? `padding: ${styles.padding};` : ''}
+  ${styles.margin ? `margin: ${styles.margin};` : ''}
+  ${styles.borderRadius ? `border-radius: ${styles.borderRadius};` : ''}
+  ${styles.border && styles.border !== 'none' ? `border: ${styles.border};` : ''}
+  ${styles.width ? `width: ${styles.width};` : ''}
+  ${styles.minHeight ? `min-height: ${styles.minHeight};` : ''}
+  ${styles.display ? `display: ${styles.display};` : ''}
+  ${styles.opacity ? `opacity: ${styles.opacity};` : ''}
+  ${styles.maxWidth ? `max-width: ${styles.maxWidth};` : ''}
+  ${styles.lineHeight ? `line-height: ${styles.lineHeight};` : ''}
+}`;
+
+          // Специфичные стили для типов блоков
+          switch (block.type) {
+            case 'header':
+              css += `
+.${blockId} .header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  min-height: 60px;
+}
+
+.${blockId} .logo {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.${blockId} .nav {
+  display: flex;
+  gap: 30px;
+}
+
+.${blockId} .nav span {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.${blockId} .nav span:hover {
+  color: #3b1fa1;
+}`;
+              break;
+              
+            case 'hero':
+              css += `
+.${blockId} {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.${blockId} h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.${blockId} p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}`;
+              break;
+              
+            case 'button':
+              css += `
+.${blockId} .styled-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.${blockId} .styled-button:hover {
+  transform: translateY(-1px);
+}`;
+              break;
+              
+            case 'columns':
+              css += `
+.${blockId} .columns-inner {
+  display: flex;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .${blockId} .columns-inner {
+    flex-direction: column;
+  }
+}`;
+              break;
+              
+            case 'column':
+              css += `
+.${blockId} {
+  flex: 1;
+}`;
+              break;
+              
+            case 'image':
+              css += `
+.${blockId} img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}`;
+              break;
+          }
+
+          // Рекурсивно генерируем CSS для дочерних блоков
+          if (block.children && block.children.length > 0) {
+            css += generateBlockCSS(block.children);
+          }
+        });
+        
+        return css;
+      };
+
+      const generateHTMLStructure = (blocks) => {
+        let html = '';
+        
+        blocks.forEach(block => {
+          html += generateBlockHTML(block);
+        });
+        
+        return html;
+      };
+
+      const generateBlockHTML = (block) => {
+        const blockId = `block-${block.id}`;
+        let html = '';
+        
+        switch (block.type) {
+          case 'header':
+            html = `
+<div class="${blockId}">
+  <div class="header-inner">
+    <div class="logo">ЛОГОТИП</div>
+    <nav class="nav">
+      <span>Главная</span>
+      <span>О нас</span>
+      <span>Контакты</span>
+    </nav>
+  </div>
+  ${block.children && block.children.length > 0 ? generateChildrenHTML(block.children) : '<div class="empty-drop-zone"></div>'}
+</div>`;
+            break;
+            
+          case 'hero':
+            html = `
+<div class="${blockId}">
+  <h1>${block.content || 'Заголовок героя'}</h1>
+  <p>Описание hero секции</p>
+  ${block.children && block.children.length > 0 ? generateChildrenHTML(block.children) : '<div class="empty-drop-zone"></div>'}
+</div>`;
+            break;
+            
+          case 'heading':
+            html = `
+<div class="${blockId}">
+  <h2>${block.content || 'Заголовок раздела'}</h2>
+</div>`;
+            break;
+            
+          case 'paragraph':
+            html = `
+<div class="${blockId}">
+  <p>${block.content || 'Текст параграфа...'}</p>
+</div>`;
+            break;
+            
+          case 'button':
+            html = `
+<div class="${blockId}">
+  <button class="styled-button">${block.content || 'Нажмите меня'}</button>
+</div>`;
+            break;
+            
+          case 'image':
+            const imageContent = block.content && block.content.startsWith('http') 
+              ? `<img src="${block.content}" alt="Изображение" onerror="this.style.display='none'">`
+              : '<div class="image-placeholder">📷 Изображение</div>';
+            html = `
+<div class="${blockId}">
+  ${imageContent}
+</div>`;
+            break;
+            
+          case 'text':
+            html = `
+<div class="${blockId}">
+  <p>${block.content || 'Простой текст...'}</p>
+</div>`;
+            break;
+            
+          case 'container':
+            html = `
+<div class="${blockId}">
+  <div class="container-inner">
+    ${block.children && block.children.length > 0 ? generateChildrenHTML(block.children) : '<div class="empty-drop-zone">📦 Контейнер</div>'}
+  </div>
+</div>`;
+            break;
+            
+          case 'section':
+            html = `
+<div class="${blockId}">
+  <div class="section-inner">
+    ${block.children && block.children.length > 0 ? generateChildrenHTML(block.children) : '<div class="empty-drop-zone">📄 Секция</div>'}
+  </div>
+</div>`;
+            break;
+            
+          case 'columns':
+            html = `
+<div class="${blockId}">
+  <div class="columns-inner">
+    ${block.children && block.children.length > 0 ? generateChildrenHTML(block.children) : '<div class="empty-drop-zone">📊 Колонки</div>'}
+  </div>
+</div>`;
+            break;
+            
+          case 'column':
+            html = `
+<div class="${blockId}">
+  ${block.children && block.children.length > 0 ? generateChildrenHTML(block.children) : '<div class="empty-drop-zone">📋 Колонка</div>'}
+</div>`;
+            break;
+            
+          case 'footer':
+            html = `
+<div class="${blockId}">
+  <div class="footer-inner">
+    <p>${block.content || '© 2024 Мой сайт. Все права защищены.'}</p>
+    ${block.children && block.children.length > 0 ? generateChildrenHTML(block.children) : ''}
+  </div>
+</div>`;
+            break;
+            
+          default:
+            html = `
+<div class="${blockId}">
+  ${block.content || block.name}
+</div>`;
+        }
+        
+        return html;
+      };
+
+      const generateChildrenHTML = (children) => {
+        let html = '';
+        children.forEach(child => {
+          html += generateBlockHTML(child);
+        });
+        return html;
+      };
+
+      // Генерируем HTML
+      const htmlContent = generateHTML(blocks.value, pageSettings.value);
       
-      const dataStr = JSON.stringify(projectData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      
+      // Создаем и скачиваем файл
+      const blob = new Blob([htmlContent], { type: 'text/html' });
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(dataBlob);
-      link.download = `landing-project.json`;
+      link.href = URL.createObjectURL(blob);
+      link.download = `website-${Date.now()}.html`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      
+      console.log('HTML экспортирован успешно!');
     };
 
     const toggleTheme = () => {
@@ -719,11 +1037,10 @@ export default {
   text-transform: uppercase;
 }
 
-
 .preview-fullscreen-btn {
   padding: 8px 16px;
-  background: var(--accent-color);
-  color: white; 
+  background: var(--success-color, #28a745);
+  color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -736,7 +1053,7 @@ export default {
 }
 
 .preview-fullscreen-btn:hover {
-  background: var(--accent-hover);
+  background: var(--success-hover, #34ce57);
   transform: translateY(-1px);
 }
 
@@ -812,7 +1129,6 @@ export default {
   color: var(--text-tertiary);
 }
 
-/* ИСПРАВЛЕНО: Адаптивная кнопка под тему */
 .adaptive-btn {
   padding: 12px 24px;
   background: var(--accent-color);
