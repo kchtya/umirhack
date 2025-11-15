@@ -1,3 +1,8 @@
+// ================================
+// test-simple.js - ЗАКОММЕНТИРОВАН
+// ================================
+
+/*
 require('dotenv').config();
 const supabase = require('./config/supabaseClient');
 
@@ -23,3 +28,4 @@ async function quickTest() {
 }
 
 quickTest();
+*/

@@ -1,3 +1,8 @@
+// ================================
+// User.js - ЗАКОММЕНТИРОВАН
+// ================================
+
+/*
 const supabase = require('../config/supabaseClient');
 
 class User {
@@ -60,3 +65,4 @@ class User {
 }
 
 module.exports = User;
+*/

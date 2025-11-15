@@ -1,3 +1,8 @@
+-- ================================
+-- 001_initial_tables.sql - ЗАКОММЕНТИРОВАН
+-- ================================
+
+/*
 -- Создание таблицы пользователей
 CREATE TABLE IF NOT EXISTS users (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -28,3 +33,4 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id);
 CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+*/

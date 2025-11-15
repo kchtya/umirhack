@@ -1,3 +1,8 @@
+-- ================================
+-- 003_fix_tables.sql - ЗАКОММЕНТИРОВАН
+-- ================================
+
+/*
 -- migrations/003_fix_tables.sql
 -- Упрощенная миграция для добавления недостающих полей
 
@@ -17,3 +22,4 @@ CREATE TABLE IF NOT EXISTS templates (
 -- Добавляем порядок проектов и поле для контента
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_order INTEGER DEFAULT 0;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS content JSONB;
+*/

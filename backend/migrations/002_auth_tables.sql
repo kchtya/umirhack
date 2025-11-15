@@ -1,3 +1,8 @@
+-- ================================
+-- 002_auth_tables.sql - ЗАКОММЕНТИРОВАН
+-- ================================
+
+/*
 -- Таблица для хранения refresh токенов
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -35,3 +40,4 @@ CREATE POLICY "Users can delete own projects" ON projects
 -- Индекс для refresh_tokens
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+*/

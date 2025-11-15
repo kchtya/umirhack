@@ -1,3 +1,8 @@
+// ================================
+// supabaseClient.js - ЗАКОММЕНТИРОВАН
+// ================================
+
+/*
 const { createClient } = require("@supabase/supabase-js");
 require('dotenv').config();
 
@@ -13,3 +18,4 @@ const supabase = createClient(
 console.log('Supabase client configured');
 
 module.exports = supabase;
+*/

@@ -1,3 +1,8 @@
+// ================================
+// validationMiddleware.js - ЗАКОММЕНТИРОВАН
+// ================================
+
+/*
 const validateBody = (schema) => (req, res, next) => {
   try {
     schema.parse(req.body);
@@ -88,3 +93,4 @@ module.exports = {
   querySchemas,
   uuidParams
 };
+*/

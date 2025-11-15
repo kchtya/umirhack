@@ -1,3 +1,8 @@
+// ================================
+// server.js - ЗАКОММЕНТИРОВАН
+// ================================
+
+/*
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -34,3 +39,4 @@ app.listen(PORT, () => {
   console.log(`Health check: http://localhost:${PORT}/api/health`);
   console.log(`Templates: http://localhost:${PORT}/api/templates`);
 });
+*/

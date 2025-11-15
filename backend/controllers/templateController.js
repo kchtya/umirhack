@@ -1,3 +1,8 @@
+// ================================
+// templateController.js - ЗАКОММЕНТИРОВАН
+// ================================
+
+/*
 const supabase = require('../config/supabaseClient');
 
 const templateController = {
@@ -64,3 +69,4 @@ const templateController = {
 };
 
 module.exports = templateController;
+*/

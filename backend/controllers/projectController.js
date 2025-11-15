@@ -1,3 +1,8 @@
+// ================================
+// projectController.js - ЗАКОММЕНТИРОВАН
+// ================================
+
+/*
 const supabase = require('../config/supabaseClient');
 
 const projectController = {
@@ -381,3 +386,4 @@ const projectController = {
 };
 
 module.exports = projectController;
+*/

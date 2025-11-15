@@ -1,3 +1,8 @@
+// ================================
+// projects.js - ЗАКОММЕНТИРОВАН
+// ================================
+
+/*
 const express = require('express');
 const { 
   getProjects, 
@@ -54,3 +59,4 @@ router.delete('/:id',
 );
 
 module.exports = router;
+*/

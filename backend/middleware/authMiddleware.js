@@ -1,3 +1,8 @@
+// ================================
+// authMiddleware.js - ЗАКОММЕНТИРОВАН
+// ================================
+
+/*
 const supabase = require('../config/supabaseClient');
 
 const authenticateToken = async (req, res, next) => {
@@ -49,3 +54,4 @@ const requireAdmin = (req, res, next) => {
 };
 
 module.exports = { authenticateToken, requireAdmin };
+*/

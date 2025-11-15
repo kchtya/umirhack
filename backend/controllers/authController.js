@@ -1,3 +1,8 @@
+// ================================
+// authController.js - ЗАКОММЕНТИРОВАН
+// ================================
+
+/*
 const supabase = require('../config/supabaseClient');
 
 const authController = {
@@ -157,3 +162,4 @@ const authController = {
 };
 
 module.exports = authController;
+*/
