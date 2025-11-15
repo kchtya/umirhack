@@ -13,6 +13,8 @@ import { storeToRefs } from 'pinia'
 
 export default {
   name: 'App',
+  export default {
+  name: 'App',
   setup() {
     const themeStore = useThemeStore()
     const editorStore = useEditorStore()
@@ -23,8 +25,8 @@ export default {
 
     const rippleStyle = computed(() => {
       return {
-        '--ripple-x': `${rippleOrigin.value.x}px`,
-        '--ripple-y': `${rippleOrigin.value.y}px`
+        left: `${rippleOrigin.value.x}px`,
+        top: `${rippleOrigin.value.y}px`
       }
     })
 
@@ -71,6 +73,7 @@ export default {
       pageStyles
     }
   }
+
 }
 </script>
 
@@ -130,8 +133,8 @@ body {
 /* Глобальный ripple эффект */
 .global-ripple {
   position: fixed;
-  top: var(--ripple-y, 50%);
-  left: var(--ripple-x, 50%);
+  top: 0;
+  left: 0;
   width: 0;
   height: 0;
   border-radius: 50%;
