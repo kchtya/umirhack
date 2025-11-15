@@ -13,8 +13,6 @@ import { storeToRefs } from 'pinia'
 
 export default {
   name: 'App',
-  export default {
-  name: 'App',
   setup() {
     const themeStore = useThemeStore()
     const editorStore = useEditorStore()
@@ -73,7 +71,6 @@ export default {
       pageStyles
     }
   }
-
 }
 </script>
 
