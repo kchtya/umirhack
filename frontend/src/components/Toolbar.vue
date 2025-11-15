@@ -1,280 +1,211 @@
 <template>
-  <div class="toolbar" v-if="activeBlock">
-    <h3>ИНСТРУМЕНТЫ БЛОКА</h3>
-    
-    <!-- Информация о блоке -->
-    <div class="toolbar-section">
-      <label>Информация:</label>
+  <div class="toolbar">
+    <div class="toolbar-header">
+      <h3>РЕДАКТОР БЛОКА</h3>
       <div class="block-info">
-        <div class="info-item">
-          <strong>Тип:</strong> {{ getBlockTypeName(activeBlock.type) }}
+        <span class="block-type">{{ activeBlock?.name }}</span>
+        <span class="block-id">ID: {{ activeBlock?.id }}</span>
+      </div>
+    </div>
+
+    <div class="toolbar-content">
+      <!-- Содержимое блока -->
+      <div class="section">
+        <h4 class="section-title">СОДЕРЖИМОЕ</h4>
+        <div class="form-group">
+          <label>Текст:</label>
+          <textarea 
+            v-model="blockContent" 
+            @input="updateContent"
+            placeholder="Введите текст..."
+            rows="3"
+          ></textarea>
         </div>
-        <div v-if="activeBlock.isStructural" class="structural-notice">
-          ⚠️ Структурный блок
+      </div>
+
+      <!-- Стили блока -->
+      <div class="section">
+        <h4 class="section-title">СТИЛИ БЛОКА</h4>
+        
+        <!-- Цвет фона -->
+        <div class="form-group">
+          <label>Цвет фона:</label>
+          <div class="color-input-group">
+            <input 
+              type="color" 
+              v-model="styles.backgroundColor"
+              @input="updateStyles"
+            >
+            <input 
+              type="text" 
+              v-model="styles.backgroundColor"
+              @input="updateStyles"
+              placeholder="#ffffff"
+            >
+          </div>
+        </div>
+
+        <!-- Фоновое изображение -->
+        <div class="form-group">
+          <label>Фоновое изображение:</label>
+          <input 
+            type="text" 
+            v-model="styles.backgroundImage"
+            @input="updateStyles"
+            placeholder="URL изображения"
+          >
+        </div>
+
+        <!-- Цвет текста -->
+        <div class="form-group">
+          <label>Цвет текста:</label>
+          <div class="color-input-group">
+            <input 
+              type="color" 
+              v-model="styles.color"
+              @input="updateStyles"
+            >
+            <input 
+              type="text" 
+              v-model="styles.color"
+              @input="updateStyles"
+              placeholder="#000000"
+            >
+          </div>
+        </div>
+
+        <!-- Размер шрифта -->
+        <div class="form-group">
+          <label>Размер шрифта:</label>
+          <input 
+            type="text" 
+            v-model="styles.fontSize"
+            @input="updateStyles"
+            placeholder="16px"
+          >
+        </div>
+
+        <!-- Выравнивание текста -->
+        <div class="form-group">
+          <label>Выравнивание:</label>
+          <select v-model="styles.textAlign" @change="updateStyles">
+            <option value="left">Слева</option>
+            <option value="center">По центру</option>
+            <option value="right">Справа</option>
+            <option value="justify">По ширине</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Размеры и отступы -->
+      <div class="section">
+        <h4 class="section-title">РАЗМЕРЫ И ОТСТУПЫ</h4>
+        
+        <!-- Внутренние отступы -->
+        <div class="form-group">
+          <label>Внутренние отступы:</label>
+          <input 
+            type="text" 
+            v-model="styles.padding"
+            @input="updateStyles"
+            placeholder="20px"
+          >
+        </div>
+
+        <!-- Внешние отступы -->
+        <div class="form-group">
+          <label>Внешние отступы:</label>
+          <input 
+            type="text" 
+            v-model="styles.margin"
+            @input="updateStyles"
+            placeholder="0"
+          >
+        </div>
+
+        <!-- Скругление углов -->
+        <div class="form-group">
+          <label>Скругление углов:</label>
+          <input 
+            type="text" 
+            v-model="styles.borderRadius"
+            @input="updateStyles"
+            placeholder="0px"
+          >
+        </div>
+
+        <!-- Ширина -->
+        <div class="form-group">
+          <label>Ширина:</label>
+          <input 
+            type="text" 
+            v-model="styles.width"
+            @input="updateStyles"
+            placeholder="100%"
+          >
+        </div>
+      </div>
+
+      <!-- Быстрые стили -->
+      <div class="section">
+        <h4 class="section-title">БЫСТРЫЕ СТИЛИ</h4>
+        <div class="quick-styles">
+          <button 
+            v-for="style in quickStyles" 
+            :key="style.name"
+            class="quick-style-btn"
+            @click="applyQuickStyle(style)"
+          >
+            {{ style.name }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Действия с блоком -->
+      <div class="section">
+        <h4 class="section-title">ДЕЙСТВИЯ</h4>
+        <div class="action-buttons">
+          <!-- ИСПРАВЛЕНЫ ИКОНКИ: Используем правильные SVG -->
+          <button @click="duplicateBlock" class="action-btn" title="Дублировать">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Дублировать
+          </button>
+          
+          <button 
+            v-if="!activeBlock?.isStructural"
+            @click="deleteBlock" 
+            class="action-btn delete" 
+            title="Удалить"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+            Удалить блок
+          </button>
+
+          <button @click="moveBlockUp" class="action-btn" title="Переместить вверх">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m18 15-6-6-6 6"/>
+            </svg>
+            Вверх
+          </button>
+
+          <button @click="moveBlockDown" class="action-btn" title="Переместить вниз">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+            Вниз
+          </button>
         </div>
       </div>
     </div>
-
-    <!-- Содержимое -->
-    <div class="toolbar-section" v-if="hasEditableContent">
-      <label>Содержимое:</label>
-      <textarea 
-        v-if="isTextBlock" 
-        v-model="localContent" 
-        @input="updateContent"
-        @blur="updateContent"
-        rows="3"
-        placeholder="Введите текст..."
-        class="content-input"
-      />
-      <input 
-        v-else-if="activeBlock.type === 'image'"
-        v-model="localContent"
-        @input="updateContent"
-        @blur="updateContent"
-        type="text"
-        placeholder="URL изображения"
-        class="content-input"
-      />
-      <div v-else class="no-content">
-        Этот блок не содержит редактируемого текста
-      </div>
-    </div>
-
-    <!-- Стили текста -->
-    <div class="toolbar-section" v-if="hasText">
-      <label>Стили текста:</label>
-      
-      <!-- Цвет текста -->
-      <div class="style-control">
-        <span>Цвет текста:</span>
-        <input 
-          type="color" 
-          v-model="textColor"
-          @change="updateTextColor"
-          class="color-input"
-        >
-        <span class="color-value">{{ textColor }}</span>
-      </div>
-      
-      <!-- Размер шрифта -->
-      <div class="style-control">
-        <span>Размер шрифта:</span>
-        <input 
-          type="range" 
-          min="12" 
-          max="72" 
-          v-model="fontSizeValue"
-          @input="updateFontSize"
-          class="range-input"
-        >
-        <span class="value">{{ fontSizeValue }}px</span>
-      </div>
-      
-      <!-- Шрифт -->
-      <div class="style-control">
-        <span>Шрифт:</span>
-        <select v-model="fontFamily" @change="updateFontFamily" class="select-input">
-          <option value="inherit">Системный</option>
-          <option value="Arial, sans-serif">Arial</option>
-          <option value="Georgia, serif">Georgia</option>
-          <option value="'Times New Roman', serif">Times New Roman</option>
-          <option value="'Courier New', monospace">Courier New</option>
-          <option value="'Helvetica Neue', sans-serif">Helvetica</option>
-        </select>
-      </div>
-      
-      <!-- Выравнивание -->
-      <div class="style-control">
-        <span>Выравнивание:</span>
-        <select v-model="textAlign" @change="updateTextAlign" class="select-input">
-          <option value="left">Слева</option>
-          <option value="center">По центру</option>
-          <option value="right">Справа</option>
-          <option value="justify">По ширине</option>
-        </select>
-      </div>
-
-      <!-- Жирность -->
-      <div class="style-control">
-        <span>Жирность:</span>
-        <select v-model="fontWeight" @change="updateFontWeight" class="select-input">
-          <option value="normal">Обычный</option>
-          <option value="bold">Жирный</option>
-          <option value="lighter">Тонкий</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Фон блока -->
-    <div class="toolbar-section">
-      <label>Фон блока:</label>
-      
-      <!-- Цвет фона -->
-      <div class="style-control">
-        <span>Цвет фона:</span>
-        <input 
-          type="color" 
-          v-model="backgroundColor"
-          @change="updateBackgroundColor"
-          class="color-input"
-        >
-        <span class="color-value">{{ backgroundColor }}</span>
-      </div>
-
-      <!-- Фоновое изображение -->
-      <div class="style-control">
-        <span>Фоновое изображение:</span>
-        <input 
-          type="text" 
-          v-model="backgroundImage"
-          @input="updateBackgroundImage"
-          placeholder="URL изображения"
-          class="content-input small"
-        >
-      </div>
-
-      <!-- Прозрачность фона -->
-      <div class="style-control">
-        <span>Прозрачность:</span>
-        <input 
-          type="range" 
-          min="0" 
-          max="100" 
-          v-model="backgroundOpacity"
-          @input="updateBackgroundOpacity"
-          class="range-input"
-        >
-        <span class="value">{{ backgroundOpacity }}%</span>
-      </div>
-
-      <!-- Размер фона -->
-      <div class="style-control" v-if="backgroundImage !== 'none' && backgroundImage !== ''">
-        <span>Размер фона:</span>
-        <select v-model="backgroundSize" @change="updateBackgroundSize" class="select-input">
-          <option value="cover">Cover</option>
-          <option value="contain">Contain</option>
-          <option value="auto">Auto</option>
-        </select>
-      </div>
-
-      <!-- Позиция фона -->
-      <div class="style-control" v-if="backgroundImage !== 'none' && backgroundImage !== ''">
-        <span>Позиция фона:</span>
-        <select v-model="backgroundPosition" @change="updateBackgroundPosition" class="select-input">
-          <option value="center">Center</option>
-          <option value="top">Top</option>
-          <option value="bottom">Bottom</option>
-          <option value="left">Left</option>
-          <option value="right">Right</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Размеры и отступы -->
-    <div class="toolbar-section">
-      <label>Размеры и отступы:</label>
-      
-      <!-- Отступы -->
-      <div class="style-control">
-        <span>Внутренние отступы:</span>
-        <input 
-          type="range" 
-          min="0" 
-          max="100" 
-          v-model="paddingValue"
-          @input="updatePadding"
-          class="range-input"
-        >
-        <span class="value">{{ paddingValue }}px</span>
-      </div>
-
-      <!-- Внешние отступы -->
-      <div class="style-control">
-        <span>Внешние отступы:</span>
-        <input 
-          type="range" 
-          min="0" 
-          max="50" 
-          v-model="marginValue"
-          @input="updateMargin"
-          class="range-input"
-        >
-        <span class="value">{{ marginValue }}px</span>
-      </div>
-
-      <!-- Скругление углов -->
-      <div class="style-control">
-        <span>Скругление углов:</span>
-        <input 
-          type="range" 
-          min="0" 
-          max="50" 
-          v-model="borderRadiusValue"
-          @input="updateBorderRadius"
-          class="range-input"
-        >
-        <span class="value">{{ borderRadiusValue }}px</span>
-      </div>
-
-      <!-- Ширина блока -->
-      <div class="style-control">
-        <span>Ширина:</span>
-        <input 
-          type="range" 
-          min="50" 
-          max="100" 
-          v-model="widthValue"
-          @input="updateWidth"
-          class="range-input"
-        >
-        <span class="value">{{ widthValue }}%</span>
-      </div>
-
-      <!-- Высота блока -->
-      <div class="style-control" v-if="activeBlock.type === 'image' || activeBlock.type === 'hero' || activeBlock.type === 'section'">
-        <span>Минимальная высота:</span>
-        <input 
-          type="range" 
-          min="100" 
-          max="800" 
-          v-model="minHeightValue"
-          @input="updateMinHeight"
-          class="range-input"
-        >
-        <span class="value">{{ minHeightValue }}px</span>
-      </div>
-    </div>
-
-    <!-- Действия с блоком -->
-    <div class="toolbar-actions" v-if="!activeBlock.isStructural">
-      <button @click="duplicateBlock" class="toolbar-btn">
-        📋 Дублировать
-      </button>
-      <button @click="deleteCurrentBlock" class="toolbar-btn danger">
-        🗑️ Удалить блок
-      </button>
-    </div>
-
-    <!-- Быстрые стили -->
-    <div class="toolbar-section" v-if="hasText">
-      <label>Быстрые стили:</label>
-      <div class="quick-styles">
-        <button 
-          v-for="style in quickStyles" 
-          :key="style.name"
-          @click="applyQuickStyle(style)"
-          class="quick-style-btn"
-          :class="{ active: isQuickStyleActive(style) }"
-        >
-          {{ style.name }}
-        </button>
-      </div>
-    </div>
-  </div>
-  <div v-else class="no-selection">
-    <h3>ВЫБЕРИТЕ БЛОК</h3>
-    <p>Выберите блок на холсте для редактирования</p>
   </div>
 </template>
 
@@ -284,170 +215,86 @@ import { storeToRefs } from 'pinia';
 import { ref, watch, computed } from 'vue';
 
 const editorStore = useEditorStore();
-const { activeBlock, blocks } = storeToRefs(editorStore);
-const { updateBlockContent, updateBlockStyles, duplicateBlock: duplicateStoreBlock, deleteBlock } = editorStore;
+const { activeBlock } = storeToRefs(editorStore);
+const { updateBlockContent, updateBlockStyles, duplicateBlock: duplicateStoreBlock, deleteBlock: deleteStoreBlock, moveBlock } = editorStore;
 
-const localContent = ref('');
-
-// Переменные стилей
-const backgroundColor = ref('#ffffff');
-const backgroundImage = ref('none');
-const backgroundOpacity = ref(100);
-const backgroundSize = ref('cover');
-const backgroundPosition = ref('center');
-const textColor = ref('#000000');
-const fontSizeValue = ref(16);
-const fontFamily = ref('inherit');
-const textAlign = ref('left');
-const fontWeight = ref('normal');
-const paddingValue = ref(20);
-const marginValue = ref(0);
-const borderRadiusValue = ref(0);
-const widthValue = ref(100);
-const minHeightValue = ref(200);
-
-const hasText = computed(() => {
-  const textTypes = ['hero', 'heading', 'paragraph', 'text', 'button', 'features', 'testimonials', 'contact', 'footer'];
-  return textTypes.includes(activeBlock.value?.type);
+const blockContent = ref('');
+const styles = ref({
+  backgroundColor: '',
+  backgroundImage: '',
+  color: '',
+  fontSize: '',
+  textAlign: '',
+  padding: '',
+  margin: '',
+  borderRadius: '',
+  width: ''
 });
 
-const hasEditableContent = computed(() => {
-  const editableTypes = ['hero', 'heading', 'paragraph', 'text', 'button', 'features', 'testimonials', 'contact', 'footer', 'image'];
-  return editableTypes.includes(activeBlock.value?.type);
-});
-
-const isTextBlock = computed(() => {
-  const textTypes = ['hero', 'heading', 'paragraph', 'text', 'features', 'testimonials', 'contact', 'footer'];
-  return textTypes.includes(activeBlock.value?.type);
-});
-
+// Быстрые стили
 const quickStyles = [
-  { name: 'Заголовок', styles: { fontSize: '32px', fontWeight: 'bold', color: '#333333' } },
-  { name: 'Подзаголовок', styles: { fontSize: '24px', fontWeight: 'bold', color: '#666666' } },
-  { name: 'Основной текст', styles: { fontSize: '16px', color: '#333333', lineHeight: '1.6' } },
-  { name: 'Выделенный', styles: { backgroundColor: '#fff3cd', padding: '10px', borderRadius: '4px' } }
+  { 
+    name: 'Заголовок', 
+    styles: { 
+      fontSize: '32px', 
+      fontWeight: 'bold',
+      color: '#333333',
+      textAlign: 'center'
+    } 
+  },
+  { 
+    name: 'Подзаголовок', 
+    styles: { 
+      fontSize: '24px', 
+      fontWeight: '600',
+      color: '#666666',
+      textAlign: 'left'
+    } 
+  },
+  { 
+    name: 'Текст', 
+    styles: { 
+      fontSize: '16px', 
+      color: '#444444',
+      lineHeight: '1.6'
+    } 
+  },
+  { 
+    name: 'Карточка', 
+    styles: { 
+      backgroundColor: '#ffffff',
+      padding: '20px',
+      borderRadius: '8px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+    } 
+  }
 ];
 
-const getBlockTypeName = (type) => {
-  const typeNames = {
-    'hero': 'Hero Секция',
-    'heading': 'Заголовок',
-    'paragraph': 'Параграф', 
-    'button': 'Кнопка',
-    'image': 'Изображение',
-    'text': 'Текст',
-    'features': 'Функции',
-    'testimonials': 'Отзывы',
-    'contact': 'Контакты',
-    'footer': 'Подвал',
-    'container': 'Тело',
-    'section': 'Секция',
-    'header': 'Шапка',
-    'columns': 'Колонки'
-  };
-  return typeNames[type] || type.toUpperCase();
-};
-
-// Обновляем значения при смене активного блока
+// Следим за изменением активного блока
 watch(activeBlock, (newBlock) => {
   if (newBlock) {
-    localContent.value = newBlock.content || '';
-    
-    const styles = newBlock.styles || {};
-    
-    backgroundColor.value = styles.backgroundColor || '#ffffff';
-    backgroundImage.value = styles.backgroundImage || 'none';
-    backgroundSize.value = styles.backgroundSize || 'cover';
-    backgroundPosition.value = styles.backgroundPosition || 'center';
-    textColor.value = styles.color || '#000000';
-    fontSizeValue.value = parseInt(styles.fontSize?.replace('px', '') || '16');
-    fontFamily.value = styles.fontFamily || 'inherit';
-    textAlign.value = styles.textAlign || 'left';
-    fontWeight.value = styles.fontWeight || 'normal';
-    paddingValue.value = parseInt(styles.padding?.replace('px', '') || '20');
-    marginValue.value = parseInt(styles.margin?.replace('px', '') || '0');
-    borderRadiusValue.value = parseInt(styles.borderRadius?.replace('px', '') || '0');
-    widthValue.value = parseInt(styles.width?.replace('%', '') || '100');
-    minHeightValue.value = parseInt(styles.minHeight?.replace('px', '') || '200');
-    
-    // Обработка opacity
-    if (styles.opacity) {
-      backgroundOpacity.value = Math.round(parseFloat(styles.opacity) * 100);
-    } else {
-      backgroundOpacity.value = 100;
-    }
+    blockContent.value = newBlock.content || '';
+    styles.value = { ...styles.value, ...newBlock.styles };
   }
-}, { immediate: true, deep: true });
+}, { immediate: true });
 
 const updateContent = () => {
-  if (activeBlock.value && localContent.value !== undefined) {
-    updateBlockContent(activeBlock.value.id, localContent.value);
+  if (activeBlock.value) {
+    updateBlockContent(activeBlock.value.id, blockContent.value);
   }
 };
 
-// Функции обновления стилей
-const updateBackgroundColor = () => {
-  updateBlockStyles(activeBlock.value.id, { backgroundColor: backgroundColor.value });
+const updateStyles = () => {
+  if (activeBlock.value) {
+    updateBlockStyles(activeBlock.value.id, { ...styles.value });
+  }
 };
 
-const updateBackgroundImage = () => {
-  const bgImage = backgroundImage.value && backgroundImage.value !== 'none' ? `url(${backgroundImage.value})` : 'none';
-  updateBlockStyles(activeBlock.value.id, { 
-    backgroundImage: bgImage
-  });
-};
-
-const updateBackgroundOpacity = () => {
-  const opacity = backgroundOpacity.value / 100;
-  updateBlockStyles(activeBlock.value.id, { opacity: opacity.toString() });
-};
-
-const updateBackgroundSize = () => {
-  updateBlockStyles(activeBlock.value.id, { backgroundSize: backgroundSize.value });
-};
-
-const updateBackgroundPosition = () => {
-  updateBlockStyles(activeBlock.value.id, { backgroundPosition: backgroundPosition.value });
-};
-
-const updateTextColor = () => {
-  updateBlockStyles(activeBlock.value.id, { color: textColor.value });
-};
-
-const updateFontSize = () => {
-  updateBlockStyles(activeBlock.value.id, { fontSize: fontSizeValue.value + 'px' });
-};
-
-const updateFontFamily = () => {
-  updateBlockStyles(activeBlock.value.id, { fontFamily: fontFamily.value });
-};
-
-const updateTextAlign = () => {
-  updateBlockStyles(activeBlock.value.id, { textAlign: textAlign.value });
-};
-
-const updateFontWeight = () => {
-  updateBlockStyles(activeBlock.value.id, { fontWeight: fontWeight.value });
-};
-
-const updatePadding = () => {
-  updateBlockStyles(activeBlock.value.id, { padding: paddingValue.value + 'px' });
-};
-
-const updateMargin = () => {
-  updateBlockStyles(activeBlock.value.id, { margin: marginValue.value + 'px' });
-};
-
-const updateBorderRadius = () => {
-  updateBlockStyles(activeBlock.value.id, { borderRadius: borderRadiusValue.value + 'px' });
-};
-
-const updateWidth = () => {
-  updateBlockStyles(activeBlock.value.id, { width: widthValue.value + '%' });
-};
-
-const updateMinHeight = () => {
-  updateBlockStyles(activeBlock.value.id, { minHeight: minHeightValue.value + 'px' });
+const applyQuickStyle = (style) => {
+  if (activeBlock.value) {
+    styles.value = { ...styles.value, ...style.styles };
+    updateBlockStyles(activeBlock.value.id, { ...style.styles });
+  }
 };
 
 const duplicateBlock = () => {
@@ -456,198 +303,148 @@ const duplicateBlock = () => {
   }
 };
 
-const deleteCurrentBlock = () => {
-  if (activeBlock.value) {
-    deleteBlock(activeBlock.value.id);
+const deleteBlock = () => {
+  if (activeBlock.value && !activeBlock.value.isStructural) {
+    deleteStoreBlock(activeBlock.value.id);
+  } else if (activeBlock.value?.isStructural) {
+    alert('Нельзя удалять структурные блоки');
   }
 };
 
-const applyQuickStyle = (style) => {
-  updateBlockStyles(activeBlock.value.id, style.styles);
+const moveBlockUp = () => {
+  if (activeBlock.value) {
+    moveBlock(activeBlock.value.id, 'up');
+  }
 };
 
-const isQuickStyleActive = (style) => {
-  const currentStyles = activeBlock.value?.styles || {};
-  return Object.keys(style.styles).every(key => 
-    currentStyles[key] === style.styles[key]
-  );
+const moveBlockDown = () => {
+  if (activeBlock.value) {
+    moveBlock(activeBlock.value.id, 'down');
+  }
 };
 </script>
 
 <style scoped>
 .toolbar {
-  width: 100%;
-  padding: 1.5rem;
-  background: var(--bg-tertiary);
-  min-height: auto;
-  overflow-y: auto;
-  max-height: 100vh;
+  height: 100%;
+  background: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.toolbar h3 {
-  margin: 0 0 1.5rem 0;
-  color: var(--text-primary);
-  font-size: 0.9rem;
+.toolbar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+.toolbar-header h3 {
   font-weight: 400;
   letter-spacing: 2px;
+  margin-bottom: 0.5rem;
   opacity: 0.8;
+  font-size: 0.9rem;
   text-transform: uppercase;
-}
-
-.toolbar-section {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.toolbar-section:last-child {
-  border-bottom: none;
-}
-
-.toolbar-section label {
-  display: block;
-  margin-bottom: 0.8rem;
-  font-weight: 300;
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  color: var(--text-primary);
 }
 
 .block-info {
-  background: var(--bg-secondary);
-  padding: 1rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-}
-
-.info-item {
-  margin-bottom: 0.5rem;
-}
-
-.structural-notice {
-  background: #fff3cd;
-  color: #856404;
-  padding: 0.5rem;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  text-align: center;
-}
-
-.content-input {
-  width: 100%;
-  padding: 0.8rem;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  font-size: 0.9rem;
-  resize: vertical;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-family: inherit;
-}
-
-.content-input.small {
-  font-size: 0.8rem;
-  padding: 0.5rem;
-}
-
-.content-input:focus {
-  outline: none;
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px rgba(59, 31, 161, 0.2);
-}
-
-.no-content {
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: 4px;
-  color: var(--text-tertiary);
-  text-align: center;
-  font-size: 0.8rem;
-}
-
-.style-control {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.8rem;
+  align-items: center;
   font-size: 0.8rem;
 }
 
-.style-control span:first-child {
-  color: var(--text-secondary);
-  min-width: 120px;
-  font-size: 0.75rem;
+.block-type {
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
-.color-input {
-  width: 40px;
-  height: 30px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  cursor: pointer;
-  background: var(--bg-secondary);
-}
-
-.color-value {
-  font-size: 0.7rem;
+.block-id {
+  opacity: 0.6;
   color: var(--text-tertiary);
-  min-width: 70px;
-  text-align: right;
   font-family: monospace;
 }
 
-.range-input {
+.toolbar-content {
   flex: 1;
-  margin: 0 8px;
-  background: var(--bg-secondary);
+  overflow-y: auto;
+  padding: 1rem 1.5rem;
 }
 
-.select-input {
-  padding: 6px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-size: 0.8rem;
-  width: 140px;
+.section {
+  margin-bottom: 2rem;
 }
 
-.value {
+.section-title {
   font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   color: var(--text-tertiary);
-  min-width: 45px;
-  text-align: right;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.toolbar-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 1.5rem;
+.form-group {
+  margin-bottom: 1rem;
 }
 
-.toolbar-btn {
-  padding: 0.8rem;
-  background: var(--bg-secondary);
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.5rem;
   border: 1px solid var(--border-color);
   border-radius: 4px;
+  background: var(--bg-primary);
   color: var(--text-primary);
-  cursor: pointer;
-  transition: all 0.2s;
   font-size: 0.8rem;
+  transition: all 0.2s;
 }
 
-.toolbar-btn:hover:not(:disabled) {
-  background: var(--accent-color);
-  color: white;
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
   border-color: var(--accent-color);
-  transform: translateY(-1px);
+  box-shadow: 0 0 0 2px rgba(59, 31, 161, 0.1);
 }
 
-.toolbar-btn.danger:hover:not(:disabled) {
-  background: #dc3545;
-  border-color: #dc3545;
+.form-group textarea {
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+
+.color-input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.color-input-group input[type="color"] {
+  width: 40px;
+  height: 40px;
+  padding: 2px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.color-input-group input[type="text"] {
+  flex: 1;
 }
 
 .quick-styles {
@@ -657,55 +454,101 @@ const isQuickStyleActive = (style) => {
 }
 
 .quick-style-btn {
-  padding: 0.6rem;
-  background: var(--bg-secondary);
+  padding: 0.75rem;
+  background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: 6px;
   color: var(--text-primary);
+  font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
-  font-size: 0.7rem;
+  text-align: center;
 }
 
-.quick-style-btn:hover,
-.quick-style-btn.active {
+.quick-style-btn:hover {
   background: var(--accent-color);
   color: white;
   border-color: var(--accent-color);
+  transform: translateY(-1px);
 }
 
-.no-selection {
-  padding: 2rem;
-  text-align: center;
-  color: var(--text-tertiary);
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.no-selection h3 {
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 400;
-  letter-spacing: 2px;
-}
-
-.no-selection p {
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
   font-size: 0.8rem;
-  margin: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
 }
 
-.toolbar::-webkit-scrollbar {
+.action-btn:hover {
+  background: var(--hover-color);
+  border-color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.action-btn.delete:hover {
+  background: var(--danger-color, #dc3545);
+  color: white;
+  border-color: var(--danger-color, #dc3545);
+}
+
+.action-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Кастомный скроллбар */
+.toolbar-content::-webkit-scrollbar {
   width: 6px;
 }
 
-.toolbar::-webkit-scrollbar-track {
+.toolbar-content::-webkit-scrollbar-track {
   background: var(--bg-tertiary);
 }
 
-.toolbar::-webkit-scrollbar-thumb {
+.toolbar-content::-webkit-scrollbar-thumb {
   background: var(--accent-color);
   border-radius: 3px;
 }
 
-.toolbar::-webkit-scrollbar-thumb:hover {
+.toolbar-content::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
+}
+
+@media (max-width: 768px) {
+  .toolbar-header {
+    padding: 1rem;
+  }
+  
+  .toolbar-content {
+    padding: 1rem;
+  }
+  
+  .quick-styles {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+    gap: 0.25rem;
+  }
+  
+  .action-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.7rem;
+  }
 }
 </style>

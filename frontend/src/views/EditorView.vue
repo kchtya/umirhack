@@ -12,7 +12,7 @@
           <div class="nav-menu">
             <span class="nav-item current-page">Конструктор</span>
             <span @click="goToTemplates" class="nav-item">Шаблоны</span>
-            <span @click="goToHome" class="nav-item">Главная</span>
+            <span @click="handleExport" class="nav-item">Экспорт</span>
           </div>
         </div>
         
@@ -56,10 +56,11 @@
                   <span class="stat-label">БЛОКОВ</span>
                 </div>
                 <button @click="toggleFullscreenPreview" class="preview-fullscreen-btn" title="Полноэкранный предпросмотр">
-                  📺 Полный экран
+                  <Maximize2 :size="16" />
+                  Полный экран
                 </button>
                 <button @click="clearAllBlocks" class="clear-btn" title="Очистить все блоки">
-                  Очистить
+                  <Trash2 :size="16" />
                 </button>
               </div>
             </div>
@@ -71,7 +72,7 @@
               </div>
               <p>ПЕРЕТАЩИТЕ БЛОКИ ДЛЯ НАЧАЛА РАБОТЫ</p>
               <p class="empty-hint">Начните с контейнера или секции</p>
-              <button @click="initializeStructuralBlocks" class="btn-primary">
+              <button @click="initializeStructuralBlocks" class="btn-primary adaptive-btn">
                 Создать базовую структуру
               </button>
             </div>
@@ -106,7 +107,8 @@
     <div v-if="fullscreenPreview" class="fullscreen-preview">
       <div class="preview-header">
         <button @click="toggleFullscreenPreview" class="close-preview-btn">
-          ✕ Закрыть предпросмотр
+          <X :size="16" />
+          Закрыть предпросмотр
         </button>
         <div class="preview-info">
           Предпросмотр сайта - <span class="preview-url">mysite.com</span>
@@ -157,7 +159,8 @@
               @error="handleImageError"
             >
             <div v-else class="preview-image-placeholder">
-              📷 Изображение
+              <Image :size="24" />
+              Изображение
             </div>
           </div>
 
@@ -233,7 +236,11 @@ import BlockComponent from '../components/BlockComponent.vue';
 
 // Иконки Lucide
 import { 
-  Download
+  Download,
+  Maximize2,
+  Trash2,
+  X,
+  Image
 } from 'lucide-vue-next';
 
 export default {
@@ -244,7 +251,11 @@ export default {
     PageSettings,
     AppFooter,
     BlockComponent,
-    Download
+    Download,
+    Maximize2,
+    Trash2,
+    X,
+    Image
   },
   setup() {
     const editorStore = useEditorStore();
@@ -320,19 +331,348 @@ export default {
     };
 
     const handleExport = () => {
-      const projectData = {
-        name: 'Мой проект',
-        blocks: blocks.value,
-        exportedAt: new Date().toISOString()
+      // Функция для генерации HTML
+      const generateHTML = (blocks, pageSettings) => {
+        const styles = generateCSS(blocks, pageSettings);
+        const htmlStructure = generateHTMLStructure(blocks);
+        
+        return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${pageSettings.title || 'Мой сайт'}</title>
+    <style>
+${styles}
+    </style>
+</head>
+<body>
+${htmlStructure}
+</body>
+</html>`;
       };
+
+      // Функция для генерации CSS
+      const generateCSS = (blocks, pageSettings) => {
+        let css = `
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  line-height: 1.6;
+  background-color: ${pageSettings.backgroundColor || '#ffffff'};
+  ${pageSettings.backgroundImage && pageSettings.backgroundImage !== '' 
+    ? `background-image: url('${pageSettings.backgroundImage}');
+  background-size: ${pageSettings.backgroundSize || 'cover'};
+  background-position: ${pageSettings.backgroundPosition || 'center'};
+  background-repeat: no-repeat;` 
+    : ''}
+}
+
+/* Block styles */
+${generateBlockCSS(blocks)}
+`;
+
+        return css;
+      };
+
+      const generateBlockCSS = (blocks) => {
+        let css = '';
+        
+        blocks.forEach(block => {
+          const blockId = `block-${block.id}`;
+          const styles = block.styles || {};
+          
+          // Генерируем CSS для текущего блока
+          css += `
+.${blockId} {
+  ${styles.backgroundColor ? `background-color: ${styles.backgroundColor};` : ''}
+  ${styles.backgroundImage && styles.backgroundImage !== 'none' ? `background-image: ${styles.backgroundImage};` : ''}
+  ${styles.backgroundSize ? `background-size: ${styles.backgroundSize};` : ''}
+  ${styles.backgroundPosition ? `background-position: ${styles.backgroundPosition};` : ''}
+  ${styles.color ? `color: ${styles.color};` : ''}
+  ${styles.fontSize ? `font-size: ${styles.fontSize};` : ''}
+  ${styles.fontFamily && styles.fontFamily !== 'inherit' ? `font-family: ${styles.fontFamily};` : ''}
+  ${styles.textAlign ? `text-align: ${styles.textAlign};` : ''}
+  ${styles.fontWeight ? `font-weight: ${styles.fontWeight};` : ''}
+  ${styles.padding ? `padding: ${styles.padding};` : ''}
+  ${styles.margin ? `margin: ${styles.margin};` : ''}
+  ${styles.borderRadius ? `border-radius: ${styles.borderRadius};` : ''}
+  ${styles.border && styles.border !== 'none' ? `border: ${styles.border};` : ''}
+  ${styles.width ? `width: ${styles.width};` : ''}
+  ${styles.minHeight ? `min-height: ${styles.minHeight};` : ''}
+  ${styles.display ? `display: ${styles.display};` : ''}
+  ${styles.opacity ? `opacity: ${styles.opacity};` : ''}
+  ${styles.maxWidth ? `max-width: ${styles.maxWidth};` : ''}
+  ${styles.lineHeight ? `line-height: ${styles.lineHeight};` : ''}
+}`;
+
+          // Специфичные стили для типов блоков
+          switch (block.type) {
+            case 'header':
+              css += `
+.${blockId} .header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  min-height: 60px;
+}
+
+.${blockId} .logo {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.${blockId} .nav {
+  display: flex;
+  gap: 30px;
+}
+
+.${blockId} .nav span {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.${blockId} .nav span:hover {
+  color: #3b1fa1;
+}`;
+              break;
+              
+            case 'hero':
+              css += `
+.${blockId} {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.${blockId} h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.${blockId} p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}`;
+              break;
+              
+            case 'button':
+              css += `
+.${blockId} .styled-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.${blockId} .styled-button:hover {
+  transform: translateY(-1px);
+}`;
+              break;
+              
+            case 'columns':
+              css += `
+.${blockId} .columns-inner {
+  display: flex;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .${blockId} .columns-inner {
+    flex-direction: column;
+  }
+}`;
+              break;
+              
+            case 'column':
+              css += `
+.${blockId} {
+  flex: 1;
+}`;
+              break;
+              
+            case 'image':
+              css += `
+.${blockId} img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}`;
+              break;
+          }
+
+          // Рекурсивно генерируем CSS для дочерних блоков
+          if (block.children && block.children.length > 0) {
+            css += generateBlockCSS(block.children);
+          }
+        });
+        
+        return css;
+      };
+
+      const generateHTMLStructure = (blocks) => {
+        let html = '';
+        
+        blocks.forEach(block => {
+          html += generateBlockHTML(block);
+        });
+        
+        return html;
+      };
+
+      const generateBlockHTML = (block) => {
+        const blockId = `block-${block.id}`;
+        let html = '';
+        
+        switch (block.type) {
+          case 'header':
+            html = `
+<div class="${blockId}">
+  <div class="header-inner">
+    <div class="logo">ЛОГОТИП</div>
+    <nav class="nav">
+      <span>Главная</span>
+      <span>О нас</span>
+      <span>Контакты</span>
+    </nav>
+  </div>
+  ${block.children && block.children.length > 0 ? generateChildrenHTML(block.children) : '<div class="empty-drop-zone"></div>'}
+</div>`;
+            break;
+            
+          case 'hero':
+            html = `
+<div class="${blockId}">
+  <h1>${block.content || 'Заголовок героя'}</h1>
+  <p>Описание hero секции</p>
+  ${block.children && block.children.length > 0 ? generateChildrenHTML(block.children) : '<div class="empty-drop-zone"></div>'}
+</div>`;
+            break;
+            
+          case 'heading':
+            html = `
+<div class="${blockId}">
+  <h2>${block.content || 'Заголовок раздела'}</h2>
+</div>`;
+            break;
+            
+          case 'paragraph':
+            html = `
+<div class="${blockId}">
+  <p>${block.content || 'Текст параграфа...'}</p>
+</div>`;
+            break;
+            
+          case 'button':
+            html = `
+<div class="${blockId}">
+  <button class="styled-button">${block.content || 'Нажмите меня'}</button>
+</div>`;
+            break;
+            
+          case 'image':
+            const imageContent = block.content && block.content.startsWith('http') 
+              ? `<img src="${block.content}" alt="Изображение" onerror="this.style.display='none'">`
+              : '<div class="image-placeholder">📷 Изображение</div>';
+            html = `
+<div class="${blockId}">
+  ${imageContent}
+</div>`;
+            break;
+            
+          case 'text':
+            html = `
+<div class="${blockId}">
+  <p>${block.content || 'Простой текст...'}</p>
+</div>`;
+            break;
+            
+          case 'container':
+            html = `
+<div class="${blockId}">
+  <div class="container-inner">
+    ${block.children && block.children.length > 0 ? generateChildrenHTML(block.children) : '<div class="empty-drop-zone">📦 Контейнер</div>'}
+  </div>
+</div>`;
+            break;
+            
+          case 'section':
+            html = `
+<div class="${blockId}">
+  <div class="section-inner">
+    ${block.children && block.children.length > 0 ? generateChildrenHTML(block.children) : '<div class="empty-drop-zone">📄 Секция</div>'}
+  </div>
+</div>`;
+            break;
+            
+          case 'columns':
+            html = `
+<div class="${blockId}">
+  <div class="columns-inner">
+    ${block.children && block.children.length > 0 ? generateChildrenHTML(block.children) : '<div class="empty-drop-zone">📊 Колонки</div>'}
+  </div>
+</div>`;
+            break;
+            
+          case 'column':
+            html = `
+<div class="${blockId}">
+  ${block.children && block.children.length > 0 ? generateChildrenHTML(block.children) : '<div class="empty-drop-zone">📋 Колонка</div>'}
+</div>`;
+            break;
+            
+          case 'footer':
+            html = `
+<div class="${blockId}">
+  <div class="footer-inner">
+    <p>${block.content || '© 2024 Мой сайт. Все права защищены.'}</p>
+    ${block.children && block.children.length > 0 ? generateChildrenHTML(block.children) : ''}
+  </div>
+</div>`;
+            break;
+            
+          default:
+            html = `
+<div class="${blockId}">
+  ${block.content || block.name}
+</div>`;
+        }
+        
+        return html;
+      };
+
+      const generateChildrenHTML = (children) => {
+        let html = '';
+        children.forEach(child => {
+          html += generateBlockHTML(child);
+        });
+        return html;
+      };
+
+      // Генерируем HTML
+      const htmlContent = generateHTML(blocks.value, pageSettings.value);
       
-      const dataStr = JSON.stringify(projectData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      
+      // Создаем и скачиваем файл
+      const blob = new Blob([htmlContent], { type: 'text/html' });
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(dataBlob);
-      link.download = `landing-project.json`;
+      link.href = URL.createObjectURL(blob);
+      link.download = `website-${Date.now()}.html`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      
+      console.log('HTML экспортирован успешно!');
     };
 
     const toggleTheme = () => {
@@ -557,14 +897,14 @@ export default {
 }
 
 .register-btn {
-  background: #3b1fa1;
+  background: var(--accent-color);
   color: white;
-  border-color: #3b1fa1;
+  border-color: var(--accent-color);
 }
 
 .register-btn:hover {
-  background: #4dabf7;
-  border-color: #4dabf7;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
   transform: translateY(-1px);
 }
 
@@ -586,7 +926,7 @@ export default {
 .theme-toggle:hover {
   background: var(--hover-color);
   transform: scale(1.05);
-  border-color: #3b1fa1;
+  border-color: var(--accent-color);
 }
 
 .theme-icon {
@@ -639,7 +979,7 @@ export default {
   right: 0;
   bottom: 0;
   background: rgba(59, 31, 161, 0.05);
-  border: 2px dashed #3b1fa1;
+  border: 2px dashed var(--accent-color);
   pointer-events: none;
   z-index: 5;
 }
@@ -686,7 +1026,7 @@ export default {
   font-size: 1.5rem;
   font-weight: 300;
   letter-spacing: 1px;
-  color: #3b1fa1;
+  color: var(--accent-color);
 }
 
 .stat-label {
@@ -699,7 +1039,7 @@ export default {
 
 .preview-fullscreen-btn {
   padding: 8px 16px;
-  background: #28a745;
+  background: var(--success-color, #28a745);
   color: white;
   border: none;
   border-radius: 6px;
@@ -707,15 +1047,18 @@ export default {
   transition: all 0.2s;
   font-size: 0.8rem;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .preview-fullscreen-btn:hover {
-  background: #34ce57;
+  background: var(--success-hover, #34ce57);
   transform: translateY(-1px);
 }
 
 .clear-btn {
-  padding: 8px 16px;
+  padding: 8px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -723,12 +1066,15 @@ export default {
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .clear-btn:hover {
-  background: #dc3545;
+  background: var(--danger-color, #dc3545);
   color: white;
-  border-color: #dc3545;
+  border-color: var(--danger-color, #dc3545);
 }
 
 .blocks-container {
@@ -783,9 +1129,9 @@ export default {
   color: var(--text-tertiary);
 }
 
-.btn-primary {
+.adaptive-btn {
   padding: 12px 24px;
-  background: #3b1fa1;
+  background: var(--accent-color);
   color: white;
   border: none;
   border-radius: 8px;
@@ -794,8 +1140,8 @@ export default {
   transition: all 0.3s ease;
 }
 
-.btn-primary:hover {
-  background: #4dabf7;
+.adaptive-btn:hover {
+  background: var(--accent-hover);
   transform: translateY(-2px);
 }
 
@@ -823,17 +1169,20 @@ export default {
 
 .close-preview-btn {
   padding: 10px 20px;
-  background: #dc3545;
+  background: var(--danger-color, #dc3545);
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .close-preview-btn:hover {
-  background: #c82333;
+  background: var(--danger-hover, #c82333);
   transform: translateY(-1px);
 }
 
@@ -844,7 +1193,7 @@ export default {
 
 .preview-url {
   font-weight: 500;
-  color: #3b1fa1;
+  color: var(--accent-color);
 }
 
 .preview-content {
@@ -889,7 +1238,7 @@ export default {
 }
 
 .preview-nav span:hover {
-  color: #3b1fa1;
+  color: var(--accent-color);
 }
 
 .preview-hero {
@@ -939,7 +1288,7 @@ export default {
 
 .preview-btn-element {
   padding: 15px 30px;
-  background: #3b1fa1;
+  background: var(--accent-color);
   color: white;
   border: none;
   border-radius: 8px;
@@ -950,7 +1299,7 @@ export default {
 }
 
 .preview-btn-element:hover {
-  background: #4dabf7;
+  background: var(--accent-hover);
   transform: translateY(-2px);
 }
 
@@ -974,6 +1323,10 @@ export default {
   color: #999;
   text-align: center;
   font-size: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 .preview-text {
